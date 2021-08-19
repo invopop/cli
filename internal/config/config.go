@@ -15,6 +15,14 @@ type Config struct {
 	Region   region.Code      `json:"region"`
 	Supplier *org.Party       `json:"supplier"`
 	Key      *dsig.PrivateKey `json:"key"`
+	API      *API             `json:"api"`
+
+	SeriesID string `json:"series_id"`
+}
+
+type API struct {
+	Host  string `json:"host"`
+	Token string `json:"token"`
 }
 
 func New(file string) *Config {

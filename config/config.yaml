@@ -1,4 +1,3 @@
-
 # Region determines the tax details that should be considered
 # for the invoices. The supplier's Tax ID Country must be related
 # to this region.
@@ -29,4 +28,17 @@ supplier:
       num: "+34644477644"
 
 # Private key used for signing requests
-key: {"use":"sig","kty":"EC","kid":"a6c3920d-8e33-4159-b337-9e7461716df1","crv":"P-256","x":"sRx7lG60fkwRXdB-4JLWA2UBjYhosjAWxbJ_d1DndxQ","y":"LtgoPTWIyReykvC15DmvgQE1GV1a8uol9350SyMK-Ks","d":"ua-_wqLa0jkDGl_GJFxmw-yRDVvLUk0pHK6whBgSBZ8"}
+key:
+  {
+    "use": "sig",
+    "kty": "EC",
+    "kid": "a6c3920d-8e33-4159-b337-9e7461716df1",
+    "crv": "P-256",
+    "x": "sRx7lG60fkwRXdB-4JLWA2UBjYhosjAWxbJ_d1DndxQ",
+    "y": "LtgoPTWIyReykvC15DmvgQE1GV1a8uol9350SyMK-Ks",
+    "d": "ua-_wqLa0jkDGl_GJFxmw-yRDVvLUk0pHK6whBgSBZ8",
+  }
+
+api:
+  host: "https://api.invopop.dev"
+  token: "eyJhbGciOiJFUzI1NiIsImtpZCI6ImZjMThmMjJkLWQ5MjktNDkzMC1iNDg5LWU3M2MyY2YyYWZjMiJ9.eyJpZCI6IjU4ZDk5MmRkLWRiMTgtNDEwNS1hMjZmLTM5Y2IyNDc0YjViNCJ9.PMnSLNZ23QDfmjs5Q4axU-k3k6dc1N9sDbaiVgj_MB40XVrsfHs4CZVxeYyNowyaMGycrtRAqcpe-qrTbuQ9xQ"

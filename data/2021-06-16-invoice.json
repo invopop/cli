@@ -3,15 +3,14 @@
 		"typ": "bill.Invoice",
 		"dig": {
 			"alg": "sha256",
-			"val": "62a35a4a03988ba547db009bf6e3599204000a00a74152ade6f16b9ebfa5f654"
+			"val": "8581d7bae46c87a10c6c5f18ed4dcd84010357a6d85a285b8d504a7d69ab2bc7"
 		}
 	},
 	"doc": {
 		"uuid": "3d7fdbdc-d037-11eb-a068-3e7e00ce5635",
-		"code": "1234",
+		"code": "INV01000032021",
 		"region": "ES",
 		"currency": "EUR",
-		"prices_include_tax": true,
 		"issue_date": "2021-06-16",
 		"value_date": "2021-06-16",
 		"supplier": {
@@ -129,6 +128,16 @@
 					}
 				],
 				"total": "172.50"
+			},
+			{
+				"i": 4,
+				"quantity": "3",
+				"item": {
+					"name": "Impuesto local",
+					"price": "5.00"
+				},
+				"sum": "15.00",
+				"total": "15.00"
 			}
 		],
 		"outlays": [
@@ -139,9 +148,9 @@
 			}
 		],
 		"totals": {
-			"sum": "5172.50",
+			"sum": "5187.50",
 			"discount": "200.00",
-			"total": "4972.50",
+			"total": "4987.50",
 			"taxes": {
 				"categories": [
 					{
@@ -149,19 +158,19 @@
 						"rates": [
 							{
 								"code": "STD",
-								"base": "3966.94",
+								"base": "4800.00",
 								"percent": "21.0%",
-								"value": "833.06"
+								"value": "1008.00"
 							},
 							{
 								"code": "RED",
-								"base": "156.82",
+								"base": "172.50",
 								"percent": "10.0%",
-								"value": "15.68"
+								"value": "17.25"
 							}
 						],
-						"base": "4123.76",
-						"value": "848.74"
+						"base": "4972.50",
+						"value": "1025.25"
 					},
 					{
 						"code": "IRPF",
@@ -169,22 +178,22 @@
 						"rates": [
 							{
 								"code": "STD",
-								"base": "3140.50",
+								"base": "3800.00",
 								"percent": "15.0%",
-								"value": "471.07"
+								"value": "570.00"
 							}
 						],
-						"base": "3140.50",
-						"value": "471.07"
+						"base": "3800.00",
+						"value": "570.00"
 					}
 				],
-				"sum": "-471.07"
+				"sum": "455.25"
 			},
 			"outlays": "200.00",
-			"payable": "4701.43"
+			"payable": "5642.75"
 		}
 	},
 	"sigs": [
-		"eyJhbGciOiJFUzI1NiIsImtpZCI6ImE2YzM5MjBkLThlMzMtNDE1OS1iMzM3LTllNzQ2MTcxNmRmMSJ9.eyJ0eXAiOiJiaWxsLkludm9pY2UiLCJkaWciOnsiYWxnIjoic2hhMjU2IiwidmFsIjoiNjJhMzVhNGEwMzk4OGJhNTQ3ZGIwMDliZjZlMzU5OTIwNDAwMGEwMGE3NDE1MmFkZTZmMTZiOWViZmE1ZjY1NCJ9fQ.QXFadPGvbuKmT6-MN9zkLA4f-oJUHhoHU5VHn-6CsEEKZoQejAx7tVi0HWmkIYJP0P9wLDc0AthoAIHCzJfYEw"
+		"eyJhbGciOiJFUzI1NiIsImtpZCI6ImE2YzM5MjBkLThlMzMtNDE1OS1iMzM3LTllNzQ2MTcxNmRmMSJ9.eyJ0eXAiOiJiaWxsLkludm9pY2UiLCJkaWciOnsiYWxnIjoic2hhMjU2IiwidmFsIjoiODU4MWQ3YmFlNDZjODdhMTBjNmM1ZjE4ZWQ0ZGNkODQwMTAzNTdhNmQ4NWEyODViOGQ1MDRhN2Q2OWFiMmJjNyJ9fQ.5Tm561Se_siZYCuWz-N37tngFLZFegyUbTB7njRfgTkHvTtzj6KG8kTrbUkpexN-iDOrRk7YCUTQenNVZrGsaA"
 	]
 }
