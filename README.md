@@ -6,7 +6,7 @@ Invoicing Command Line Interface - creating invoices quickly and easier from the
 
 The objective of InvoCLI is to demonstrate how the GoBL library and Invopop services can be used together to create digital invoices.
 
-The application takes the provided yaml document and attempts to fill out all the missing details in order to output an official GoBL envelope. These can then be forwarded to Invopop for conversion into a PDF.
+The application takes the provided yaml document and attempts to fill out all the missing details in order to output an official GoBL envelope. These can then be forwarded to Invopop for processing using a pre-defined workflow.
 
 ## How it Works
 

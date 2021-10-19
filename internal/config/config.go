@@ -3,7 +3,10 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
-	"path"
+	"os"
+	"os/user"
+	"path/filepath"
+	"strings"
 
 	"github.com/ghodss/yaml"
 	"github.com/invopop/gobl/dsig"
@@ -25,8 +28,25 @@ type API struct {
 	Token string `json:"token"`
 }
 
-func New(file string) *Config {
+func New(files ...string) *Config {
 	c := new(Config)
+
+	// Determine which file exists
+	var file string
+	usr, _ := user.Current()
+	for _, f := range files {
+		if strings.HasPrefix(f, "~/") {
+			f = filepath.Join(usr.HomeDir, f[2:])
+		}
+		if _, err := os.Stat(f); !os.IsNotExist(err) {
+			file = f
+			break
+		}
+	}
+	if file == "" {
+		panic("no configuration file found")
+	}
+
 	if err := c.parse(file); err != nil {
 		panic("configuration error: " + err.Error())
 	}
@@ -34,9 +54,7 @@ func New(file string) *Config {
 }
 
 func (c *Config) parse(file string) error {
-	f := path.Join(".", file)
-
-	data, err := ioutil.ReadFile(f)
+	data, err := ioutil.ReadFile(file)
 	if err != nil {
 		return fmt.Errorf("reading file: %w", err)
 	}
