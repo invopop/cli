@@ -5,7 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/fatih/color"
 	"github.com/invopop/client.go/invopop"
@@ -80,8 +84,59 @@ func (c *Command) send(cmd *cobra.Command, args []string) {
 
 	d, _ := json.MarshalIndent(j, "", "    ")
 	fmt.Println(string(d))
+
+	if err := c.downloadAttachments(ctx, j); err != nil {
+		color.HiRed("failed to download attachments: %s", err.Error())
+	}
 }
 
 func (c *Command) download(cmd *cobra.Command, args []string) {
+	ctx := context.Background()
+	j := new(invopop.Job)
+	j.ID = args[0]
 
+	if err := c.client.Transform.FetchJob(ctx, j); err != nil {
+		color.HiRed("failed to fetch job: %s", err.Error())
+		return
+	}
+
+	d, _ := json.MarshalIndent(j, "", "    ")
+	fmt.Println(string(d))
+
+	if err := c.downloadAttachments(ctx, j); err != nil {
+		color.HiRed("failed to download attachments: %s", err.Error())
+	}
+}
+
+func (c *Command) downloadAttachments(ctx context.Context, j *invopop.Job) error {
+	for _, a := range j.Attachments {
+		np := filepath.Join(".", "data", "output", j.ID, a.ID)
+		if err := os.MkdirAll(np, os.ModePerm); err != nil {
+			return fmt.Errorf("preparing directory `%s`: %w", np, err)
+		}
+
+		// Get the data
+		resp, err := http.Get(a.URL)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		// Create the file
+		fp := filepath.Join(np, a.Name)
+		out, err := os.Create(fp)
+		if err != nil {
+			return err
+		}
+		defer out.Close()
+
+		// Write the body to file
+		_, err = io.Copy(out, resp.Body)
+		if err != nil {
+			return err
+		}
+
+		color.HiGreen("downloaded file: %s", fp)
+	}
+	return nil
 }
