@@ -38,7 +38,7 @@ func (c *Command) Command() *cobra.Command {
 		},
 	}
 	cmd.AddCommand(&cobra.Command{
-		Use:   "send [workflow ID] [file.yaml]",
+		Use:   "send [workflow ID] [file.json]",
 		Short: "Send a GOBL envelope for processing",
 		Args:  cobra.ExactArgs(2),
 		Run:   c.send,
@@ -103,9 +103,25 @@ func (c *Command) download(cmd *cobra.Command, args []string) {
 	d, _ := json.MarshalIndent(j, "", "    ")
 	fmt.Println(string(d))
 
+	if err := c.storeEnvelope(ctx, j); err != nil {
+		color.HiRed("failed to store envelope: %s", err.Error())
+	}
 	if err := c.downloadAttachments(ctx, j); err != nil {
 		color.HiRed("failed to download attachments: %s", err.Error())
 	}
+}
+
+func (c *Command) storeEnvelope(ctx context.Context, j *invopop.Job) error {
+	if len(j.Envelope) == 0 {
+		return nil
+	}
+
+	fp := filepath.Join(".", "data", "output", j.ID, "envelope.json")
+	if err := ioutil.WriteFile(fp, j.Envelope, 0644); err != nil {
+		return fmt.Errorf("writing data: %w", err)
+	}
+
+	return nil
 }
 
 func (c *Command) downloadAttachments(ctx context.Context, j *invopop.Job) error {
@@ -115,28 +131,36 @@ func (c *Command) downloadAttachments(ctx context.Context, j *invopop.Job) error
 			return fmt.Errorf("preparing directory `%s`: %w", np, err)
 		}
 
-		// Get the data
-		resp, err := http.Get(a.URL)
-		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
-
-		// Create the file
 		fp := filepath.Join(np, a.Name)
-		out, err := os.Create(fp)
-		if err != nil {
-			return err
-		}
-		defer out.Close()
-
-		// Write the body to file
-		_, err = io.Copy(out, resp.Body)
-		if err != nil {
+		if err := c.downloadURL(ctx, a.URL, fp); err != nil {
 			return err
 		}
 
 		color.HiGreen("downloaded file: %s", fp)
 	}
+	return nil
+}
+
+func (c *Command) downloadURL(ctx context.Context, url, path string) error {
+	// Get the data
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Create the file
+	out, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	// Write the body to file
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

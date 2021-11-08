@@ -56,7 +56,7 @@ func (c *Command) list(cmd *cobra.Command, args []string) {
 		return
 	}
 	if len(col.List) == 0 {
-		fmt.Println("No workflows found")
+		color.HiYellow("No tasks found")
 		return
 	}
 
@@ -92,9 +92,10 @@ func (c *Command) create(cmd *cobra.Command, args []string) {
 		color.HiRed("prompt failed: %v", err.Error())
 		return
 	}
-	ps := promptui.Select{
-		Label: "Task Provider",
-		Items: []string{"core-tag", "core-markdown"},
+	ps := promptui.SelectWithAdd{
+		Label:    "Task Provider",
+		Items:    []string{"core-tag", "core-markdown", "es-bill-pdf"},
+		AddLabel: "Other",
 	}
 	_, t.Provider, err = ps.Run()
 	if err != nil {

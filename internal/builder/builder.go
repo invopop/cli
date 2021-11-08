@@ -3,6 +3,7 @@ package builder
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"path"
@@ -56,11 +57,15 @@ func (c *Command) build(cmd *cobra.Command, args []string) {
 	}
 
 	// Parse as a GoBL document
-	env := new(gobl.Envelope)
+	env := gobl.NewEnvelope(c.conf.Region)
 	if err := yaml.Unmarshal(data, env); err != nil {
 		color.HiRed("parsing source YAML error: %s", err.Error())
 		return
 	}
+	if env.Head.UUID.IsZero() {
+		env.Head.UUID = uuid.NewV1()
+	}
+	fmt.Printf("Envelope UUID IS: %v\n", env.Head.UUID.String())
 
 	switch env.Head.Type {
 	case bill.InvoiceType:
@@ -99,25 +104,16 @@ func (c *Command) buildInvoice(ctx context.Context, env *gobl.Envelope) error {
 	}
 
 	// Merge our configuration details to complete the invoice details
-	if inv.UUID.IsZero() {
-		inv.UUID = uuid.NewV1()
-	}
-	fmt.Printf("UUID IS: %v\n", inv.UUID.String())
 	if inv.Code == "" {
+		if inv.UUID == nil {
+			id := uuid.NewV4()
+			inv.UUID = &id
+		}
 		if err := c.requestInvoiceSeriesEntry(ctx, inv); err != nil {
 			return fmt.Errorf("requesting series entry: %w", err)
 		}
 	}
-	inv.Region = c.conf.Region
 	inv.Supplier = c.conf.Supplier
-
-	// Calculate and validate
-	if err := inv.Calculate(); err != nil {
-		return fmt.Errorf("calculating invoice totals: %w", err)
-	}
-	if err := inv.Validate(); err != nil {
-		return fmt.Errorf("validating invoice: %w", err)
-	}
 
 	// re-insert
 	if err := env.Insert(inv); err != nil {
@@ -133,15 +129,6 @@ func (c *Command) buildMessage(env *gobl.Envelope) error {
 	msg := new(note.Message)
 	if err := env.Extract(msg); err != nil {
 		return fmt.Errorf("extracting message: %w", err)
-	}
-
-	// Assign UUID if not there already
-	if env.Head.UUID.IsZero() {
-		env.Head.UUID = uuid.NewV1()
-	}
-
-	if err := msg.Validate(); err != nil {
-		return fmt.Errorf("validating message: %w", err)
 	}
 
 	if err := env.Insert(msg); err != nil {
@@ -168,6 +155,9 @@ func (c *Command) writeFile(env *gobl.Envelope, file string) error {
 }
 
 func (c *Command) requestInvoiceSeriesEntry(ctx context.Context, inv *bill.Invoice) error {
+	if inv.UUID == nil {
+		return errors.New("cannot request sequence entry without Invoice UUID")
+	}
 	se := new(invopop.SeriesEntry)
 	se.ID = inv.UUID.String()
 

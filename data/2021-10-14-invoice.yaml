@@ -3,7 +3,9 @@ head:
   typ: "bill.Invoice"
 
 doc:
+  uuid: "d69ad9f7-e826-480a-8e62-19e3342d3a6f"
   currency: "EUR"
+  code: "INV01000112021"
   issue_date: "2021-10-14"
 
   customer:

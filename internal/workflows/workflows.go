@@ -58,7 +58,7 @@ func (c *Command) list(cmd *cobra.Command, args []string) {
 	}
 
 	if len(wc.List) == 0 {
-		fmt.Println("No workflows found")
+		color.HiYellow("No workflows found")
 		return
 	}
 

@@ -5,6 +5,7 @@ head:
 doc:
   uuid: "3d7fdbdc-d037-11eb-a068-3e7e00ce5635"
   currency: "EUR"
+  code: "INV2021-001"
   issue_date: "2021-06-16"
   prices_include_tax: false
 

@@ -1,5 +1,5 @@
-# Region determines the tax details that should be considered
-# for the invoices. The supplier's Tax ID Country must be related
+# Region determines the tax details and validation rules that should be considered
+# for the envelopes. The supplier's Tax ID Country must be related
 # to this region.
 region: "ES"
 
@@ -7,25 +7,25 @@ region: "ES"
 supplier:
   tax_id:
     country: "ES"
-    code: "X3157928M"
-  name: "SamLown.com"
+    code: "B91983379"
+  name: "A Company Name S.L."
   people:
     - name:
-        alias: Sam
-        given: Samuel
-        surname: Lown
+        alias: Paco
+        given: Francisco
+        surname: Smith
   addresses:
-    - num: "1629"
-      street: "Calle Diseminado"
-      locality: "Miraflores de la Sierra"
+    - num: "10"
+      street: "Calle Mayor"
+      locality: "Madrid"
       region: "Madrid"
-      code: "28792"
+      code: "28003"
       country: "ES"
   emails:
-    - addr: "me@samlown.com"
+    - addr: "contact@company.com"
   telephones:
     - label: mobile
-      num: "+34644477644"
+      num: "+34644123123"
 
 # Private key used for signing requests
 key:
