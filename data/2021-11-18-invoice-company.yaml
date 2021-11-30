@@ -1,0 +1,84 @@
+
+head:
+  typ: "bill.Invoice"
+
+doc:
+  uuid: "d69ad9f7-e826-480a-8e62-19e3342d3a6f"
+  currency: "EUR"
+  code: "INV01000112021"
+  issue_date: "2021-10-14"
+  prices_include_tax: false
+
+  supplier:
+    tax_id:
+      country: "ES"
+      code: "B85905495"
+    name: "Autofiscal S.L."
+    alias: "Invopop"
+    emails:
+      - addr: "sam.lown@invopop.com"
+    addresses:
+      - num: "1629"
+        street: "Calle Diseminado"
+        locality: "Miraflores de la Sierra"
+        region: "Madrid"
+        code: "28792"
+        country: "ES"
+    registration:
+      office: "Registro Mercantil de Madrid"
+      volume: "27590"
+      sheet: "129"
+      page: "M-497191"
+      entry: "1"
+
+
+  customer:
+    tax_id:
+      country: "ES"
+      code: "X3157928M"
+    name: "Samuel Lown"
+    emails:
+      - addr: "me@samlown.com"
+    addresses:
+      - num: "1629"
+        street: "Calle Diseminado"
+        locality: "Miraflores de la Sierra"
+        region: "Madrid"
+        code: "28792"
+        country: "ES"
+
+  notes: |-
+    Thank you for your custom! If you require assistance with this invoice please get in touch.
+
+  lines:
+  - quantity: 20
+    item:
+      name: "Development services day rate"
+      price: "200.00"
+    discount:
+      rate: "10.0%"
+      reason: "volume"
+    taxes:
+    - cat: "VAT"
+      code: "STD"
+    - cat: "IRPF"
+      code: "STD"
+
+  payment:
+    terms:
+      code: "due_date"
+      due_dates:
+      - date: "2021-10-30"
+        percent: "40%"
+      - date: "2021-11-30"
+        percent: "60%"
+    advances:
+    - date: "2021-09-01" 
+      desc: "Deposit paid upfront"
+      amount: "250.00"
+    instructions:
+      code: "credit_transfer"
+      credit_transfer:
+      - name: "Bankinter"
+        iban: "ES06 0128 0011 3901 0008 1391"
+        bic: "BKBKESMMXXX"

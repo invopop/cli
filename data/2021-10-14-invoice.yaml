@@ -13,6 +13,7 @@ doc:
       country: "ES"
       code: "B-85905495"
     name: "Autofiscal S.L."
+    alias: "Invopop"
     emails:
       - addr: "sam.lown@invopop.com"
     addresses:

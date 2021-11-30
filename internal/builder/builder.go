@@ -113,7 +113,9 @@ func (c *Command) buildInvoice(ctx context.Context, env *gobl.Envelope) error {
 			return fmt.Errorf("requesting series entry: %w", err)
 		}
 	}
-	inv.Supplier = c.conf.Supplier
+	if inv.Supplier == nil {
+		inv.Supplier = c.conf.Supplier
+	}
 
 	// re-insert
 	if err := env.Insert(inv); err != nil {

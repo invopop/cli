@@ -61,3 +61,12 @@ doc:
   outlays:
   - desc: "Something paid for by us"
     paid: "200.00" 
+
+  payment:
+    terms:  
+      code: "instant"
+    instructions:
+      code: "credit_transfer"
+      credit_transfer:
+      - name: "Bankinter"
+        iban: "ES06 0128 0011 3901 0008 1391"
