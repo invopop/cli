@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/invopop/client.go/invopop"
 	"github.com/invopop/invocli/internal/builder"
 	"github.com/invopop/invocli/internal/config"
@@ -16,12 +19,14 @@ const (
 	serviceName = "invocli"
 )
 
-var (
-	configPaths = []string{"~/.invocli/config.yaml", "/etc/invocli/config.yaml", "./config/config.yaml", "config.yaml"}
-)
+var configPaths = []string{"~/.invocli/config.yaml", "/etc/invocli/config.yaml", "./config/config.yaml", "config.yaml"}
 
 func main() {
-	conf := config.New(configPaths...)
+	conf, err := config.New(configPaths...)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 
 	ic := invopop.New(conf.API.Host, conf.API.Token)
 
@@ -39,6 +44,8 @@ func main() {
 	root.AddCommand(wkfl.Command())
 
 	if err := root.Execute(); err != nil {
-		panic(err.Error())
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
+	os.Exit(0)
 }

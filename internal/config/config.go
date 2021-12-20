@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -28,7 +29,7 @@ type API struct {
 	Token string `json:"token"`
 }
 
-func New(files ...string) *Config {
+func New(files ...string) (*Config, error) {
 	c := new(Config)
 
 	// Determine which file exists
@@ -44,13 +45,13 @@ func New(files ...string) *Config {
 		}
 	}
 	if file == "" {
-		panic("no configuration file found")
+		return nil, errors.New("no configuration file found")
 	}
 
 	if err := c.parse(file); err != nil {
-		panic("configuration error: " + err.Error())
+		return nil, fmt.Errorf("configuration error: %w", err)
 	}
-	return c
+	return c, nil
 }
 
 func (c *Config) parse(file string) error {
