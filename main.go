@@ -16,12 +16,13 @@ const (
 	serviceName = "invocli"
 )
 
-var (
-	configPaths = []string{"~/.invocli/config.yaml", "/etc/invocli/config.yaml", "./config/config.yaml", "config.yaml"}
-)
+var configPaths = []string{"~/.invocli/config.yaml", "/etc/invocli/config.yaml", "./config/config.yaml", "config.yaml"}
 
 func main() {
-	conf := config.New(configPaths...)
+	conf, err := config.New(configPaths...)
+	if err != nil {
+		panic(err.Error())
+	}
 
 	ic := invopop.New(conf.API.Host, conf.API.Token)
 
