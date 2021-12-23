@@ -12,9 +12,10 @@ import (
 	"path/filepath"
 
 	"github.com/fatih/color"
+	"github.com/spf13/cobra"
+
 	"github.com/invopop/client.go/invopop"
 	"github.com/invopop/gobl/uuid"
-	"github.com/spf13/cobra"
 )
 
 // Command keeps together the functionality required for jobs.
@@ -76,9 +77,13 @@ func (c *Command) send(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	if j.CompletedAt != "" {
+	complete, err := j.Status()
+	switch {
+	case complete && err == nil:
 		color.HiGreen("Job created and completed successfully")
-	} else {
+	case complete && err != nil:
+		color.HiRed("Job created, but failed: %s", err)
+	default:
 		color.HiGreen("Job created, completion is still pending")
 	}
 
