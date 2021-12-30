@@ -74,7 +74,6 @@ func (c *Command) buildEnvelope(ctx context.Context, file string) (*gobl.Envelop
 	if env.Head.UUID.IsZero() {
 		env.Head.UUID = uuid.NewV1()
 	}
-	fmt.Printf("Envelope UUID IS: %v\n", env.Head.UUID.String())
 
 	switch env.Head.Type {
 	case bill.InvoiceType:
