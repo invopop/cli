@@ -63,13 +63,19 @@ func (c *Command) buildEnvelope(ctx context.Context, file string) (*gobl.Envelop
 	// Read in the file
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
-		return nil, fmt.Errorf("reading file data: %w", err)
+		return nil, fmt.Errorf("reading file: %w", err)
 	}
 
 	// Parse as a GoBL document
 	env := gobl.NewEnvelope(c.conf.Region)
 	if err := yaml.Unmarshal(data, env); err != nil {
 		return nil, fmt.Errorf("parsing source YAML: %w", err)
+	}
+	if env.Head == nil {
+		return nil, errors.New("invalid/empty header")
+	}
+	if env.Document == nil {
+		return nil, errors.New("invalid/empty document")
 	}
 	if env.Head.UUID.IsZero() {
 		env.Head.UUID = uuid.NewV1()
