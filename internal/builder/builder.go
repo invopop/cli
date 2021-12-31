@@ -8,17 +8,17 @@ import (
 	"io/ioutil"
 	"path"
 
+	"github.com/fatih/color"
+	"github.com/ghodss/yaml"
+	"github.com/manifoldco/promptui"
+	"github.com/spf13/cobra"
+
 	"github.com/invopop/client.go/invopop"
 	"github.com/invopop/gobl"
 	"github.com/invopop/gobl/bill"
 	"github.com/invopop/gobl/note"
 	"github.com/invopop/gobl/uuid"
 	"github.com/invopop/invocli/internal/config"
-
-	"github.com/fatih/color"
-	"github.com/ghodss/yaml"
-	"github.com/manifoldco/promptui"
-	"github.com/spf13/cobra"
 )
 
 // Command keeps together the functionality required to build
@@ -49,52 +49,58 @@ func (c *Command) build(cmd *cobra.Command, args []string) {
 	ctx := context.Background()
 	file := args[0]
 
+	env, err := c.buildEnvelope(ctx, file)
+	if err != nil {
+		color.HiRed(err.Error())
+		return
+	}
+	if err := c.writeFile(env, file); err != nil {
+		color.HiRed("unable to write file output: %v", err.Error())
+	}
+}
+
+func (c *Command) buildEnvelope(ctx context.Context, file string) (*gobl.Envelope, error) {
 	// Read in the file
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
-		color.HiRed("reading file data: %s", err.Error())
-		return
+		return nil, fmt.Errorf("reading file: %w", err)
 	}
 
 	// Parse as a GoBL document
 	env := gobl.NewEnvelope(c.conf.Region)
 	if err := yaml.Unmarshal(data, env); err != nil {
-		color.HiRed("parsing source YAML error: %s", err.Error())
-		return
+		return nil, fmt.Errorf("parsing source YAML: %w", err)
+	}
+	if env.Head == nil {
+		return nil, errors.New("invalid/empty header")
+	}
+	if env.Document == nil {
+		return nil, errors.New("invalid/empty document")
 	}
 	if env.Head.UUID.IsZero() {
 		env.Head.UUID = uuid.NewV1()
 	}
-	fmt.Printf("Envelope UUID IS: %v\n", env.Head.UUID.String())
 
 	switch env.Head.Type {
 	case bill.InvoiceType:
 		if err := c.buildInvoice(ctx, env); err != nil {
-			color.HiRed(err.Error())
-			return
+			return nil, err
 		}
 	case note.MessageType:
 		if err := c.buildMessage(env); err != nil {
-			color.HiRed(err.Error())
-			return
+			return nil, err
 		}
 	default:
-		color.HiRed(`unrecognised envelope type: "%v"`, env.Head.Type)
-		return
+		return nil, fmt.Errorf("unrecognized envelope type: %q", env.Head.Type)
 	}
 
 	if err := env.Sign(c.conf.Key); err != nil {
-		color.HiRed("signing envelope: %s", err.Error())
-		return
+		return nil, fmt.Errorf("signing envelope: %w", err)
 	}
 	if err := env.Validate(); err != nil {
-		color.HiRed("invalid envelope: %s", err.Error())
-		return
+		return nil, fmt.Errorf("invalid envelope: %w", err)
 	}
-
-	if err := c.writeFile(env, file); err != nil {
-		color.HiRed("unable to write file output: %v", err.Error())
-	}
+	return env, nil
 }
 
 func (c *Command) buildInvoice(ctx context.Context, env *gobl.Envelope) error {

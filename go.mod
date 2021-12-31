@@ -6,10 +6,12 @@ require (
 	github.com/fatih/color v1.9.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/invopop/client.go v0.8.0
-	github.com/invopop/gobl v0.2.0
+	github.com/invopop/gobl v0.8.0
 	github.com/manifoldco/promptui v0.8.0
 	github.com/rodaine/table v1.0.1
 	github.com/spf13/cobra v1.1.3
+	github.com/stretchr/testify v1.6.1
+	gitlab.com/flimzy/testy v0.9.0
 )
 
 //replace github.com/invopop/gobl => /home/sam/workspace/invopop/gobl
