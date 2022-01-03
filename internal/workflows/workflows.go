@@ -104,7 +104,7 @@ func (c *Command) create(cmd *cobra.Command, args []string) {
 	w.TaskIDs = c.taskLoop(ary, tc)
 
 	if err := c.client.Transform.CreateWorkflow(ctx, w); err != nil {
-		color.HiRed("creating task failed: %v", err.Error())
+		color.HiRed("creating workflow failed: %v", err.Error())
 		return
 	}
 
