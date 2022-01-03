@@ -1,7 +1,6 @@
 package workflows
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -49,7 +48,7 @@ func (c *Command) Command() *cobra.Command {
 }
 
 func (c *Command) list(cmd *cobra.Command, args []string) {
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	wc := new(invopop.WorkflowCollection)
 	if err := c.client.Transform.ListWorkflows(ctx, wc); err != nil {
@@ -73,7 +72,7 @@ func (c *Command) list(cmd *cobra.Command, args []string) {
 }
 
 func (c *Command) create(cmd *cobra.Command, args []string) {
-	ctx := context.Background()
+	ctx := cmd.Context()
 	var err error
 	w := new(invopop.Workflow)
 	w.ID = uuid.NewV4().String()

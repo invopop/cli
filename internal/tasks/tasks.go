@@ -1,7 +1,6 @@
 package tasks
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -49,7 +48,7 @@ func (c *Command) Command() *cobra.Command {
 }
 
 func (c *Command) list(cmd *cobra.Command, args []string) {
-	ctx := context.Background()
+	ctx := cmd.Context()
 	col := new(invopop.TaskCollection)
 	if err := c.client.Transform.ListTasks(ctx, col); err != nil {
 		color.HiRed(err.Error())
@@ -71,7 +70,7 @@ func (c *Command) list(cmd *cobra.Command, args []string) {
 }
 
 func (c *Command) create(cmd *cobra.Command, args []string) {
-	ctx := context.Background()
+	ctx := cmd.Context()
 	var err error
 	t := new(invopop.Task)
 	t.ID = uuid.NewV4().String()

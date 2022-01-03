@@ -1,7 +1,6 @@
 package sequences
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -55,7 +54,7 @@ func (c *Command) Command() *cobra.Command {
 }
 
 func (c *Command) list(cmd *cobra.Command, args []string) {
-	ctx := context.Background()
+	ctx := cmd.Context()
 	sc := new(invopop.SeriesCollection)
 	if err := c.client.Sequence.ListSeries(ctx, sc); err != nil {
 		color.HiRed(err.Error())
@@ -78,7 +77,7 @@ func (c *Command) list(cmd *cobra.Command, args []string) {
 }
 
 func (c *Command) create(cmd *cobra.Command, args []string) {
-	ctx := context.Background()
+	ctx := cmd.Context()
 	var err error
 	s := new(invopop.Series)
 	s.ID = uuid.NewV4().String()
@@ -148,7 +147,7 @@ func (c *Command) create(cmd *cobra.Command, args []string) {
 }
 
 func (c *Command) next(cmd *cobra.Command, args []string) {
-	ctx := context.Background()
+	ctx := cmd.Context()
 	seriesID := args[0]
 
 	se := new(invopop.SeriesEntry)
