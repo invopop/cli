@@ -22,6 +22,14 @@ const (
 var configPaths = []string{"~/.invocli/config.yaml", "/etc/invocli/config.yaml", "./config/config.yaml", "config.yaml"}
 
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	os.Exit(0)
+}
+
+func run() error {
 	conf, err := config.New(configPaths...)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -43,9 +51,5 @@ func main() {
 	root.AddCommand(tsks.Command())
 	root.AddCommand(wkfl.Command())
 
-	if err := root.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-	os.Exit(0)
+	return root.Execute(ctx)
 }
