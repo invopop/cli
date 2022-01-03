@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/invopop/client.go/invopop"
 	"github.com/invopop/invocli/internal/builder"
@@ -30,6 +33,8 @@ func main() {
 }
 
 func run() error {
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
 	conf, err := config.New(configPaths...)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -51,5 +56,5 @@ func run() error {
 	root.AddCommand(tsks.Command())
 	root.AddCommand(wkfl.Command())
 
-	return root.Execute(ctx)
+	return root.ExecuteContext(ctx)
 }
