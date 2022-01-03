@@ -101,7 +101,11 @@ func (c *Command) create(cmd *cobra.Command, args []string) {
 		return
 	}
 	ary := make([]string, 0)
-	w.TaskIDs = c.taskLoop(ary, tc)
+	w.TaskIDs, err = c.taskLoop(ary, tc)
+	if err != nil {
+		color.HiRed("prompt failed: %v", err.Error())
+		return
+	}
 
 	if err := c.client.Transform.CreateWorkflow(ctx, w); err != nil {
 		color.HiRed("creating workflow failed: %v", err.Error())
@@ -114,7 +118,7 @@ func (c *Command) create(cmd *cobra.Command, args []string) {
 }
 
 // taskLoop helps ask for an array of tasks
-func (c *Command) taskLoop(ary []string, tc *invopop.TaskCollection) []string {
+func (c *Command) taskLoop(ary []string, tc *invopop.TaskCollection) ([]string, error) {
 	list := make([]string, len(tc.List))
 	for i, t := range tc.List {
 		list[i] = fmt.Sprintf("%s- %s", t.ID, t.Name)
@@ -127,11 +131,10 @@ func (c *Command) taskLoop(ary []string, tc *invopop.TaskCollection) []string {
 	}
 	i, _, err := ps.Run()
 	if err != nil {
-		color.HiRed("prompt failed: %v", err.Error())
-		return ary
+		return nil, err
 	}
 	if i == (len(list) - 1) {
-		return ary
+		return ary, nil
 	}
 	t := tc.List[i]
 	ary = append(ary, t.ID)
