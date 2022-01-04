@@ -109,7 +109,7 @@ func (c *Command) download(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to store envelope: %w", err)
 	}
 	if err := c.downloadAttachments(ctx, j); err != nil {
-		return fmt.Errof("failed to download attachments: %w", err)
+		return fmt.Errorf("failed to download attachments: %w", err)
 	}
 	return nil
 }

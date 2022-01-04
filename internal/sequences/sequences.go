@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/invopop/client.go/invopop"
-	"github.com/invopop/gobl/uuid"
-
 	"github.com/fatih/color"
 	"github.com/manifoldco/promptui"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
+
+	"github.com/invopop/client.go/invopop"
+	"github.com/invopop/gobl/uuid"
+	"github.com/invopop/invocli/internal/warn"
 )
 
 type Command struct {
@@ -36,34 +37,32 @@ func (c *Command) Command() *cobra.Command {
 	cmd.AddCommand(&cobra.Command{
 		Use:   "list",
 		Short: "Show a list of sequence series that belong to the client",
-		Run:   c.list,
+		RunE:  c.list,
 	})
 	cmd.AddCommand(&cobra.Command{
 		Use:   "create",
 		Short: "Follow steps to create a new sequence",
-		Run:   c.create,
+		RunE:  c.create,
 	})
 	cmd.AddCommand(&cobra.Command{
 		Use:   "next [series ID]",
 		Short: "Create a new entry in the series",
 		Args:  cobra.ExactArgs(1),
-		Run:   c.next,
+		RunE:  c.next,
 	})
 
 	return cmd
 }
 
-func (c *Command) list(cmd *cobra.Command, args []string) {
+func (c *Command) list(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	sc := new(invopop.SeriesCollection)
 	if err := c.client.Sequence.ListSeries(ctx, sc); err != nil {
-		color.HiRed(err.Error())
-		return
+		return err
 	}
 
 	if len(sc.List) == 0 {
-		fmt.Println("No series found")
-		return
+		return warn.Warn("No series found")
 	}
 
 	tbl := table.New("ID", "Name", "Prefix", "Padding", "Suffix", "Last Idx.", "Created At")
@@ -74,9 +73,10 @@ func (c *Command) list(cmd *cobra.Command, args []string) {
 		tbl.AddRow(s.ID, s.Name, s.Prefix, s.Padding, s.Suffix, s.LastIndex, s.CreatedAt)
 	}
 	tbl.Print()
+	return nil
 }
 
-func (c *Command) create(cmd *cobra.Command, args []string) {
+func (c *Command) create(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	var err error
 	s := new(invopop.Series)
@@ -87,24 +87,21 @@ func (c *Command) create(cmd *cobra.Command, args []string) {
 	}
 	s.Name, err = p.Run()
 	if err != nil {
-		fmt.Printf("prompt failed: %v\n", err.Error())
-		return
+		return fmt.Errorf("prompt failed: %w", err)
 	}
 	p = promptui.Prompt{
 		Label: "Series Prefix",
 	}
 	s.Prefix, err = p.Run()
 	if err != nil {
-		fmt.Printf("prompt failed: %v\n", err.Error())
-		return
+		return fmt.Errorf("prompt failed: %w", err)
 	}
 	p = promptui.Prompt{
 		Label: "Series Suffix",
 	}
 	s.Suffix, err = p.Run()
 	if err != nil {
-		fmt.Printf("prompt failed: %v\n", err.Error())
-		return
+		return fmt.Errorf("prompt failed: %w", err)
 	}
 	ps := promptui.Select{
 		Label: "Padding",
@@ -112,8 +109,7 @@ func (c *Command) create(cmd *cobra.Command, args []string) {
 	}
 	_, si, err := ps.Run()
 	if err != nil {
-		fmt.Printf("prompt select failed: %v\n", err.Error())
-		return
+		return fmt.Errorf("prompt select failed: %w", err)
 	}
 	i, _ := strconv.ParseInt(si, 10, 32)
 	s.Padding = int32(i)
@@ -129,8 +125,7 @@ func (c *Command) create(cmd *cobra.Command, args []string) {
 	}
 	sn, err := p.Run()
 	if err != nil {
-		fmt.Printf("prompt failed: %v\n", err.Error())
-		return
+		return fmt.Errorf("prompt failed: %w", err)
 	}
 	if sn != "" {
 		si, _ := strconv.ParseInt(sn, 10, 32)
@@ -138,25 +133,25 @@ func (c *Command) create(cmd *cobra.Command, args []string) {
 	}
 
 	if err := c.client.Sequence.CreateSeries(ctx, s); err != nil {
-		color.HiRed(err.Error())
-		return
+		return err
 	}
 
 	d, _ := json.MarshalIndent(s, "", "    ")
 	fmt.Println(string(d))
+	return nil
 }
 
-func (c *Command) next(cmd *cobra.Command, args []string) {
+func (c *Command) next(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	seriesID := args[0]
 
 	se := new(invopop.SeriesEntry)
 	se.ID = uuid.NewV1().String()
 	if err := c.client.Sequence.CreateEntry(ctx, seriesID, se); err != nil {
-		color.HiRed(err.Error())
-		return
+		return err
 	}
 
 	d, _ := json.MarshalIndent(se, "", "    ")
 	fmt.Println(string(d))
+	return nil
 }
