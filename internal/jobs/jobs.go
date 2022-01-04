@@ -54,7 +54,7 @@ func (c *Command) Command() *cobra.Command {
 }
 
 func (c *Command) send(cmd *cobra.Command, args []string) {
-	ctx := context.Background()
+	ctx := cmd.Context()
 	j := new(invopop.Job)
 	j.ID = uuid.NewV1().String()
 	j.WorkflowID = args[0]
@@ -96,7 +96,7 @@ func (c *Command) send(cmd *cobra.Command, args []string) {
 }
 
 func (c *Command) download(cmd *cobra.Command, args []string) {
-	ctx := context.Background()
+	ctx := cmd.Context()
 	j := new(invopop.Job)
 	j.ID = args[0]
 

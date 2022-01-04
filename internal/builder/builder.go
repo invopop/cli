@@ -46,7 +46,7 @@ func (c *Command) Command() *cobra.Command {
 }
 
 func (c *Command) build(cmd *cobra.Command, args []string) {
-	ctx := context.Background()
+	ctx := cmd.Context()
 	file := args[0]
 
 	env, err := c.buildEnvelope(ctx, file)
