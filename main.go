@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/invopop/client.go/invopop"
 	"github.com/invopop/invocli/internal/builder"
@@ -22,6 +25,16 @@ const (
 var configPaths = []string{"~/.invocli/config.yaml", "/etc/invocli/config.yaml", "./config/config.yaml", "config.yaml"}
 
 func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	os.Exit(0)
+}
+
+func run() error {
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
 	conf, err := config.New(configPaths...)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -43,9 +56,5 @@ func main() {
 	root.AddCommand(tsks.Command())
 	root.AddCommand(wkfl.Command())
 
-	if err := root.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-	os.Exit(0)
+	return root.ExecuteContext(ctx)
 }
