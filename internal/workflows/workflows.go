@@ -2,7 +2,6 @@ package workflows
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/fatih/color"
@@ -31,8 +30,9 @@ func (c *Command) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "workflow",
 		Short: "Create and managed workflows",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return errors.New("choose a workflow operation")
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			color.HiRed("choose a workflow operation")
+			return cmd.Usage()
 		},
 	}
 	cmd.AddCommand(&cobra.Command{

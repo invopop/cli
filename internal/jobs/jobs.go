@@ -34,8 +34,9 @@ func (c *Command) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "job",
 		Short: "Create and managed jobs",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return errors.New("choose a job operation")
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			color.HiRed("choose a job operation")
+			return cmd.Usage()
 		},
 	}
 	cmd.AddCommand(&cobra.Command{

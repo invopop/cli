@@ -2,7 +2,6 @@ package sequences
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -30,8 +29,9 @@ func (c *Command) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "series",
 		Short: "Manage sequence series",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return errors.New("choose a series operation")
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			color.HiRed("choose a series operation")
+			return cmd.Usage()
 		},
 	}
 	cmd.AddCommand(&cobra.Command{
