@@ -174,8 +174,7 @@ func (c *Command) requestInvoiceSeriesEntry(ctx context.Context, inv *bill.Invoi
 	}
 	seriesID, err := p.Run()
 	if err != nil {
-		fmt.Printf("prompt failed: %v\n", err.Error())
-		return err
+		return fmt.Errorf("prompt failed: %w", err)
 	}
 
 	if err := c.client.Sequence.CreateEntry(ctx, seriesID, se); err != nil {

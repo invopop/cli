@@ -161,9 +161,5 @@ func (c *Command) downloadURL(ctx context.Context, url, path string) error {
 
 	// Write the body to file
 	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
