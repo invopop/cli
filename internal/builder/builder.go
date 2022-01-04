@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"path"
 
-	"github.com/fatih/color"
 	"github.com/ghodss/yaml"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
@@ -41,22 +40,22 @@ func (c *Command) Command() *cobra.Command {
 		Use:   "build [file.yaml]",
 		Short: "Convert the file into a GoBL json document",
 		Args:  cobra.MinimumNArgs(1),
-		Run:   c.build,
+		RunE:  c.build,
 	}
 }
 
-func (c *Command) build(cmd *cobra.Command, args []string) {
+func (c *Command) build(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	file := args[0]
 
 	env, err := c.buildEnvelope(ctx, file)
 	if err != nil {
-		color.HiRed(err.Error())
-		return
+		return err
 	}
 	if err := c.writeFile(env, file); err != nil {
-		color.HiRed("unable to write file output: %v", err.Error())
+		return fmt.Errorf("unable to write file output: %w", err)
 	}
+	return nil
 }
 
 func (c *Command) buildEnvelope(ctx context.Context, file string) (*gobl.Envelope, error) {
