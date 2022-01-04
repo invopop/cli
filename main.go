@@ -49,7 +49,10 @@ func run() error {
 	tsks := tasks.New(ic)
 	wkfl := workflows.New(ic)
 
-	root := &cobra.Command{Use: serviceName}
+	root := &cobra.Command{
+		Use:          serviceName,
+		SilenceUsage: true,
+	}
 	root.AddCommand(bldr.Command())
 	root.AddCommand(seqs.Command())
 	root.AddCommand(jobs.Command())
