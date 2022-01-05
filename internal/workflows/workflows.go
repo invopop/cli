@@ -2,15 +2,16 @@ package workflows
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/fatih/color"
-	"github.com/invopop/client.go/invopop"
-	"github.com/invopop/gobl/uuid"
 	"github.com/manifoldco/promptui"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
+
+	"github.com/invopop/client.go/invopop"
+	"github.com/invopop/gobl/uuid"
+	"github.com/invopop/invocli/internal/warn"
 )
 
 // Command keeps together the functionality required for jobs.
@@ -29,36 +30,35 @@ func (c *Command) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "workflow",
 		Short: "Create and managed workflows",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return errors.New("choose a workflow operation")
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			color.HiRed("choose a workflow operation")
+			return cmd.Usage()
 		},
 	}
 	cmd.AddCommand(&cobra.Command{
 		Use:   "list",
 		Short: "Produce a table of all the current workflows.",
-		Run:   c.list,
+		RunE:  c.list,
 	})
 	cmd.AddCommand(&cobra.Command{
 		Use:   "create",
 		Short: "Create a new workflow step by step.",
-		Run:   c.create,
+		RunE:  c.create,
 	})
 
 	return cmd
 }
 
-func (c *Command) list(cmd *cobra.Command, args []string) {
+func (c *Command) list(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
 	wc := new(invopop.WorkflowCollection)
 	if err := c.client.Transform.ListWorkflows(ctx, wc); err != nil {
-		color.HiRed(err.Error())
-		return
+		return err
 	}
 
 	if len(wc.List) == 0 {
-		color.HiYellow("No workflows found")
-		return
+		return warn.Warn("No workflows found")
 	}
 
 	tbl := table.New("ID", "Name", "Desc", "Disabled", "Task IDs", "Created At")
@@ -69,9 +69,10 @@ func (c *Command) list(cmd *cobra.Command, args []string) {
 		tbl.AddRow(w.ID, w.Name, w.Description, w.Disabled, w.TaskIDs, w.CreatedAt)
 	}
 	tbl.Print()
+	return nil
 }
 
-func (c *Command) create(cmd *cobra.Command, args []string) {
+func (c *Command) create(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	var err error
 	w := new(invopop.Workflow)
@@ -82,39 +83,35 @@ func (c *Command) create(cmd *cobra.Command, args []string) {
 	}
 	w.Name, err = p.Run()
 	if err != nil {
-		color.HiRed("prompt failed: %v", err.Error())
-		return
+		return fmt.Errorf("prompt failed: %w", err)
 	}
 	p = promptui.Prompt{
 		Label: "Workflow Description",
 	}
 	w.Description, err = p.Run()
 	if err != nil {
-		color.HiRed("prompt failed: %v", err.Error())
-		return
+		return fmt.Errorf("prompt failed: %w", err)
 	}
 
 	// Fetch a list of tasks
 	tc := new(invopop.TaskCollection)
 	if err := c.client.Transform.ListTasks(ctx, tc); err != nil {
-		color.HiRed("index failed: %v", err.Error())
-		return
+		return fmt.Errorf("index failed: %w", err)
 	}
 	ary := make([]string, 0)
 	w.TaskIDs, err = c.taskLoop(ary, tc)
 	if err != nil {
-		color.HiRed("prompt failed: %v", err.Error())
-		return
+		return fmt.Errorf("prompt failed: %w", err)
 	}
 
 	if err := c.client.Transform.CreateWorkflow(ctx, w); err != nil {
-		color.HiRed("creating workflow failed: %v", err.Error())
-		return
+		return fmt.Errorf("creating workflow failed: %w", err)
 	}
 
 	color.HiGreen("Workflow created successfully")
 	d, _ := json.MarshalIndent(w, "", "    ")
 	fmt.Println(string(d))
+	return nil
 }
 
 // taskLoop helps ask for an array of tasks
