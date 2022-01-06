@@ -11,6 +11,7 @@ import (
 
 	"github.com/invopop/client.go/invopop"
 	"github.com/invopop/gobl/uuid"
+	"github.com/invopop/invocli/internal/cobrax"
 	"github.com/invopop/invocli/internal/warn"
 )
 
@@ -28,8 +29,7 @@ func New(ic *invopop.Client) *cobra.Command {
 		Use:   "task",
 		Short: "Create and manage tasks",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			color.HiRed("choose a task operation")
-			return cmd.Usage()
+			return cobrax.Usage(cmd, "choose a task operation")
 		},
 	}
 	cmd.AddCommand(&cobra.Command{

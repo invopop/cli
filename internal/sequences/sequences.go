@@ -12,6 +12,7 @@ import (
 
 	"github.com/invopop/client.go/invopop"
 	"github.com/invopop/gobl/uuid"
+	"github.com/invopop/invocli/internal/cobrax"
 	"github.com/invopop/invocli/internal/warn"
 )
 
@@ -28,8 +29,7 @@ func New(ic *invopop.Client) *cobra.Command {
 		Use:   "series",
 		Short: "Manage sequence series",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			color.HiRed("choose a series operation")
-			return cmd.Usage()
+			return cobrax.Usage(cmd, "choose a series operation")
 		},
 	}
 	cmd.AddCommand(&cobra.Command{
@@ -45,7 +45,7 @@ func New(ic *invopop.Client) *cobra.Command {
 	cmd.AddCommand(&cobra.Command{
 		Use:   "next [series ID]",
 		Short: "Create a new entry in the series",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobrax.ExactArgs(1),
 		RunE:  c.next,
 	})
 

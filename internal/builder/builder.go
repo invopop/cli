@@ -17,6 +17,7 @@ import (
 	"github.com/invopop/gobl/bill"
 	"github.com/invopop/gobl/note"
 	"github.com/invopop/gobl/uuid"
+	"github.com/invopop/invocli/internal/cobrax"
 	"github.com/invopop/invocli/internal/config"
 )
 
@@ -36,7 +37,7 @@ func New(ic *invopop.Client, conf *config.Config) *cobra.Command {
 	return &cobra.Command{
 		Use:   "build [file.yaml]",
 		Short: "Convert the file into a GoBL json document",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobrax.MinimumNArgs(1),
 		RunE:  c.build,
 	}
 }

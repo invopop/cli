@@ -31,10 +31,19 @@ func main() {
 		}
 		if errors.As(err, &werr) {
 			color.HiYellow(err.Error())
-		} else {
-			color.HiRed(err.Error())
-			os.Exit(1)
+			return
 		}
+
+		color.HiRed(err.Error())
+		var usageErr interface {
+			UsageCmd() *cobra.Command
+		}
+		if errors.As(err, &usageErr) {
+			if err := usageErr.UsageCmd().Usage(); err != nil {
+				color.HiRed(err.Error())
+			}
+		}
+		os.Exit(1)
 	}
 	os.Exit(0)
 }
@@ -51,8 +60,9 @@ func run() error {
 	ic := invopop.New(conf.API.Host, conf.API.Token)
 
 	root := &cobra.Command{
-		Use:          serviceName,
-		SilenceUsage: true,
+		Use:           serviceName,
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
 	root.AddCommand(builder.New(ic, conf))
 	root.AddCommand(sequences.New(ic))
