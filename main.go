@@ -50,7 +50,6 @@ func run() error {
 
 	ic := invopop.New(conf.API.Host, conf.API.Token)
 
-	bldr := builder.New(ic, conf)
 	seqs := sequences.New(ic)
 	tsks := tasks.New(ic)
 	wkfl := workflows.New(ic)
@@ -59,7 +58,7 @@ func run() error {
 		Use:          serviceName,
 		SilenceUsage: true,
 	}
-	root.AddCommand(bldr.Command())
+	root.AddCommand(builder.New(ic, conf))
 	root.AddCommand(seqs.Command())
 	root.AddCommand(jobs.New(ic))
 	root.AddCommand(tsks.Command())
