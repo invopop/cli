@@ -16,6 +16,7 @@ import (
 
 	"github.com/invopop/client.go/invopop"
 	"github.com/invopop/gobl/uuid"
+	"github.com/invopop/invocli/internal/cobrax"
 )
 
 // command keeps together the functionality required for jobs.
@@ -31,8 +32,7 @@ func New(ic *invopop.Client) *cobra.Command {
 		Use:   "job",
 		Short: "Create and managed jobs",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			color.HiRed("choose a job operation")
-			return cmd.Usage()
+			return cobrax.Usage(cmd, "choose a job operation")
 		},
 	}
 	cmd.AddCommand(&cobra.Command{
@@ -44,7 +44,7 @@ func New(ic *invopop.Client) *cobra.Command {
 	cmd.AddCommand(&cobra.Command{
 		Use:   "download [job ID]",
 		Short: "Fetch a job's details and download the results",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobrax.ExactArgs(1),
 		RunE:  c.download,
 	})
 	return cmd
