@@ -50,21 +50,15 @@ func run() error {
 
 	ic := invopop.New(conf.API.Host, conf.API.Token)
 
-	bldr := builder.New(ic, conf)
-	seqs := sequences.New(ic)
-	jobs := jobs.New(ic)
-	tsks := tasks.New(ic)
-	wkfl := workflows.New(ic)
-
 	root := &cobra.Command{
 		Use:          serviceName,
 		SilenceUsage: true,
 	}
-	root.AddCommand(bldr.Command())
-	root.AddCommand(seqs.Command())
-	root.AddCommand(jobs.Command())
-	root.AddCommand(tsks.Command())
-	root.AddCommand(wkfl.Command())
+	root.AddCommand(builder.New(ic, conf))
+	root.AddCommand(sequences.New(ic))
+	root.AddCommand(jobs.New(ic))
+	root.AddCommand(tasks.New(ic))
+	root.AddCommand(workflows.New(ic))
 
 	return root.ExecuteContext(ctx)
 }

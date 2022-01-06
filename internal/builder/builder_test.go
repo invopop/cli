@@ -4,9 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/invopop/invocli/internal/config"
 	"github.com/stretchr/testify/assert"
 	"gitlab.com/flimzy/testy"
+
+	"github.com/invopop/invocli/internal/config"
 )
 
 func Test_buildEnvelope(t *testing.T) {
@@ -17,8 +18,8 @@ func Test_buildEnvelope(t *testing.T) {
 	}{
 		{
 			name: "file not found",
-			file: "non-existant file",
-			err:  "reading file: open non-existant file: no such file or directory",
+			file: "non-existent file",
+			err:  "reading file: open non-existent file: no such file or directory",
 		},
 		{
 			name: "invalid yaml",
@@ -52,7 +53,7 @@ func Test_buildEnvelope(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			c := &Command{
+			c := &command{
 				conf: &config.Config{
 					Region: "ES",
 				},

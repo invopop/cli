@@ -14,19 +14,16 @@ import (
 	"github.com/invopop/invocli/internal/warn"
 )
 
-// Command keeps together the functionality required for jobs.
-type Command struct {
+// command keeps together the functionality required for jobs.
+type command struct {
 	client *invopop.Client
 }
 
 // New returns a new command instance
-func New(ic *invopop.Client) *Command {
-	c := new(Command)
+func New(ic *invopop.Client) *cobra.Command {
+	c := new(command)
 	c.client = ic
-	return c
-}
 
-func (c *Command) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "workflow",
 		Short: "Create and managed workflows",
@@ -49,7 +46,7 @@ func (c *Command) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *Command) list(cmd *cobra.Command, args []string) error {
+func (c *command) list(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
 	wc := new(invopop.WorkflowCollection)
@@ -72,7 +69,7 @@ func (c *Command) list(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (c *Command) create(cmd *cobra.Command, args []string) error {
+func (c *command) create(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	var err error
 	w := new(invopop.Workflow)
@@ -115,7 +112,7 @@ func (c *Command) create(cmd *cobra.Command, args []string) error {
 }
 
 // taskLoop helps ask for an array of tasks
-func (c *Command) taskLoop(ary []string, tc *invopop.TaskCollection) ([]string, error) {
+func (c *command) taskLoop(ary []string, tc *invopop.TaskCollection) ([]string, error) {
 	list := make([]string, len(tc.List))
 	for i, t := range tc.List {
 		list[i] = fmt.Sprintf("%s- %s", t.ID, t.Name)

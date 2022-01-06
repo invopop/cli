@@ -15,17 +15,15 @@ import (
 	"github.com/invopop/invocli/internal/warn"
 )
 
-type Command struct {
+type command struct {
 	client *invopop.Client
 }
 
-func New(ic *invopop.Client) *Command {
-	c := new(Command)
+// New returns the sequences command.
+func New(ic *invopop.Client) *cobra.Command {
+	c := new(command)
 	c.client = ic
-	return c
-}
 
-func (c *Command) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "series",
 		Short: "Manage sequence series",
@@ -54,7 +52,7 @@ func (c *Command) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *Command) list(cmd *cobra.Command, args []string) error {
+func (c *command) list(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	sc := new(invopop.SeriesCollection)
 	if err := c.client.Sequence.ListSeries(ctx, sc); err != nil {
@@ -76,7 +74,7 @@ func (c *Command) list(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (c *Command) create(cmd *cobra.Command, args []string) error {
+func (c *command) create(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	var err error
 	s := new(invopop.Series)
@@ -141,7 +139,7 @@ func (c *Command) create(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (c *Command) next(cmd *cobra.Command, args []string) error {
+func (c *command) next(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	seriesID := args[0]
 
