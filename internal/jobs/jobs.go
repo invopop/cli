@@ -151,16 +151,14 @@ func (c *command) downloadURL(ctx context.Context, url, path string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck
 
-	// Create the file
 	out, err := os.Create(path)
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer out.Close() // nolint:errcheck
 
-	// Write the body to file
 	_, err = io.Copy(out, resp.Body)
 	return err
 }
