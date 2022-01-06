@@ -14,19 +14,16 @@ import (
 	"github.com/invopop/invocli/internal/warn"
 )
 
-// Command keeps together the functionality required for tasks.
-type Command struct {
+// command keeps together the functionality required for tasks.
+type command struct {
 	client *invopop.Client
 }
 
 // New returns a new command instance
-func New(ic *invopop.Client) *Command {
-	c := new(Command)
+func New(ic *invopop.Client) *cobra.Command {
+	c := new(command)
 	c.client = ic
-	return c
-}
 
-func (c *Command) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "task",
 		Short: "Create and manage tasks",
@@ -49,7 +46,7 @@ func (c *Command) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *Command) list(cmd *cobra.Command, args []string) error {
+func (c *command) list(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	col := new(invopop.TaskCollection)
 	if err := c.client.Transform.ListTasks(ctx, col); err != nil {
@@ -70,7 +67,7 @@ func (c *Command) list(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (c *Command) create(cmd *cobra.Command, args []string) error {
+func (c *command) create(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	var err error
 	t := new(invopop.Task)

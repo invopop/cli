@@ -51,7 +51,6 @@ func run() error {
 	ic := invopop.New(conf.API.Host, conf.API.Token)
 
 	seqs := sequences.New(ic)
-	tsks := tasks.New(ic)
 	wkfl := workflows.New(ic)
 
 	root := &cobra.Command{
@@ -61,7 +60,7 @@ func run() error {
 	root.AddCommand(builder.New(ic, conf))
 	root.AddCommand(seqs.Command())
 	root.AddCommand(jobs.New(ic))
-	root.AddCommand(tsks.Command())
+	root.AddCommand(tasks.New(ic))
 	root.AddCommand(wkfl.Command())
 
 	return root.ExecuteContext(ctx)
