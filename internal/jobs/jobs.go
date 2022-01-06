@@ -146,8 +146,12 @@ func (c *Command) downloadAttachments(ctx context.Context, j *invopop.Job) error
 }
 
 func (c *Command) downloadURL(ctx context.Context, url, path string) error {
-	// Get the data
-	resp, err := http.Get(url)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
