@@ -52,7 +52,6 @@ func run() error {
 
 	bldr := builder.New(ic, conf)
 	seqs := sequences.New(ic)
-	jobs := jobs.New(ic)
 	tsks := tasks.New(ic)
 	wkfl := workflows.New(ic)
 
@@ -62,7 +61,7 @@ func run() error {
 	}
 	root.AddCommand(bldr.Command())
 	root.AddCommand(seqs.Command())
-	root.AddCommand(jobs.Command())
+	root.AddCommand(jobs.New(ic))
 	root.AddCommand(tsks.Command())
 	root.AddCommand(wkfl.Command())
 

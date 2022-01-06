@@ -18,19 +18,15 @@ import (
 	"github.com/invopop/gobl/uuid"
 )
 
-// Command keeps together the functionality required for jobs.
-type Command struct {
+// command keeps together the functionality required for jobs.
+type command struct {
 	client *invopop.Client
 }
 
 // New returns a new command instance
-func New(ic *invopop.Client) *Command {
-	c := new(Command)
+func New(ic *invopop.Client) *cobra.Command {
+	c := new(command)
 	c.client = ic
-	return c
-}
-
-func (c *Command) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "job",
 		Short: "Create and managed jobs",
@@ -54,7 +50,7 @@ func (c *Command) Command() *cobra.Command {
 	return cmd
 }
 
-func (c *Command) send(cmd *cobra.Command, args []string) error {
+func (c *command) send(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	j := new(invopop.Job)
 	j.ID = uuid.NewV1().String()
@@ -94,7 +90,7 @@ func (c *Command) send(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (c *Command) download(cmd *cobra.Command, args []string) error {
+func (c *command) download(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	j := new(invopop.Job)
 	j.ID = args[0]
@@ -115,7 +111,7 @@ func (c *Command) download(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (c *Command) storeEnvelope(ctx context.Context, j *invopop.Job) error {
+func (c *command) storeEnvelope(_ context.Context, j *invopop.Job) error {
 	if len(j.Envelope) == 0 {
 		return nil
 	}
@@ -128,7 +124,7 @@ func (c *Command) storeEnvelope(ctx context.Context, j *invopop.Job) error {
 	return nil
 }
 
-func (c *Command) downloadAttachments(ctx context.Context, j *invopop.Job) error {
+func (c *command) downloadAttachments(ctx context.Context, j *invopop.Job) error {
 	for _, a := range j.Attachments {
 		np := filepath.Join(".", "data", "output", j.ID, a.ID)
 		if err := os.MkdirAll(np, os.ModePerm); err != nil {
@@ -145,7 +141,7 @@ func (c *Command) downloadAttachments(ctx context.Context, j *invopop.Job) error
 	return nil
 }
 
-func (c *Command) downloadURL(ctx context.Context, url, path string) error {
+func (c *command) downloadURL(ctx context.Context, url, path string) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
