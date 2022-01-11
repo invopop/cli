@@ -16,44 +16,41 @@ import (
 
 	"github.com/invopop/client.go/invopop"
 	"github.com/invopop/gobl/uuid"
+	"github.com/invopop/invocli/internal/cobrax"
 )
 
-// Command keeps together the functionality required for jobs.
-type Command struct {
+// command keeps together the functionality required for jobs.
+type command struct {
 	client *invopop.Client
 }
 
 // New returns a new command instance
-func New(ic *invopop.Client) *Command {
-	c := new(Command)
+func New(ic *invopop.Client) *cobra.Command {
+	c := new(command)
 	c.client = ic
-	return c
-}
-
-func (c *Command) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "job",
 		Short: "Create and managed jobs",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return errors.New("choose a job operation")
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return cobrax.Usage(cmd, "choose a job operation")
 		},
 	}
 	cmd.AddCommand(&cobra.Command{
 		Use:   "send [workflow ID] [file.json]",
 		Short: "Send a GOBL envelope for processing",
-		Args:  cobra.ExactArgs(2),
-		Run:   c.send,
+		Args:  cobrax.ExactArgs(2),
+		RunE:  c.send,
 	})
 	cmd.AddCommand(&cobra.Command{
 		Use:   "download [job ID]",
 		Short: "Fetch a job's details and download the results",
-		Args:  cobra.ExactArgs(1),
-		Run:   c.download,
+		Args:  cobrax.ExactArgs(1),
+		RunE:  c.download,
 	})
 	return cmd
 }
 
-func (c *Command) send(cmd *cobra.Command, args []string) {
+func (c *command) send(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	j := new(invopop.Job)
 	j.ID = uuid.NewV1().String()
@@ -63,18 +60,15 @@ func (c *Command) send(cmd *cobra.Command, args []string) {
 
 	data, err := ioutil.ReadFile(args[1])
 	if err != nil {
-		color.HiRed("reading file data: %s", err.Error())
-		return
+		return fmt.Errorf("reading file data: %w", err)
 	}
 	if len(data) == 0 {
-		color.HiRed("file is empty")
-		return
+		return errors.New("file is empty")
 	}
 	j.Envelope = data
 
 	if err := c.client.Transform.CreateJob(ctx, j, invopop.WithWait(60)); err != nil {
-		color.HiRed("failed to create job: %s", err.Error())
-		return
+		return fmt.Errorf("failed to create job: %w", err)
 	}
 
 	complete, err := j.Status()
@@ -91,32 +85,33 @@ func (c *Command) send(cmd *cobra.Command, args []string) {
 	fmt.Println(string(d))
 
 	if err := c.downloadAttachments(ctx, j); err != nil {
-		color.HiRed("failed to download attachments: %s", err.Error())
+		return fmt.Errorf("failed to download attachments: %w", err)
 	}
+	return nil
 }
 
-func (c *Command) download(cmd *cobra.Command, args []string) {
+func (c *command) download(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	j := new(invopop.Job)
 	j.ID = args[0]
 
 	if err := c.client.Transform.FetchJob(ctx, j); err != nil {
-		color.HiRed("failed to fetch job: %s", err.Error())
-		return
+		return fmt.Errorf("failed to fetch job: %w", err)
 	}
 
 	d, _ := json.MarshalIndent(j, "", "    ")
 	fmt.Println(string(d))
 
 	if err := c.storeEnvelope(ctx, j); err != nil {
-		color.HiRed("failed to store envelope: %s", err.Error())
+		return fmt.Errorf("failed to store envelope: %w", err)
 	}
 	if err := c.downloadAttachments(ctx, j); err != nil {
-		color.HiRed("failed to download attachments: %s", err.Error())
+		return fmt.Errorf("failed to download attachments: %w", err)
 	}
+	return nil
 }
 
-func (c *Command) storeEnvelope(ctx context.Context, j *invopop.Job) error {
+func (c *command) storeEnvelope(_ context.Context, j *invopop.Job) error {
 	if len(j.Envelope) == 0 {
 		return nil
 	}
@@ -129,7 +124,7 @@ func (c *Command) storeEnvelope(ctx context.Context, j *invopop.Job) error {
 	return nil
 }
 
-func (c *Command) downloadAttachments(ctx context.Context, j *invopop.Job) error {
+func (c *command) downloadAttachments(ctx context.Context, j *invopop.Job) error {
 	for _, a := range j.Attachments {
 		np := filepath.Join(".", "data", "output", j.ID, a.ID)
 		if err := os.MkdirAll(np, os.ModePerm); err != nil {
@@ -146,26 +141,24 @@ func (c *Command) downloadAttachments(ctx context.Context, j *invopop.Job) error
 	return nil
 }
 
-func (c *Command) downloadURL(ctx context.Context, url, path string) error {
-	// Get the data
-	resp, err := http.Get(url)
+func (c *command) downloadURL(ctx context.Context, url, path string) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
-	// Create the file
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close() // nolint:errcheck
+
 	out, err := os.Create(path)
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer out.Close() // nolint:errcheck
 
-	// Write the body to file
 	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }

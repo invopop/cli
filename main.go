@@ -2,10 +2,14 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/fatih/color"
+	"github.com/spf13/cobra"
 
 	"github.com/invopop/client.go/invopop"
 	"github.com/invopop/invocli/internal/builder"
@@ -14,19 +18,31 @@ import (
 	"github.com/invopop/invocli/internal/sequences"
 	"github.com/invopop/invocli/internal/tasks"
 	"github.com/invopop/invocli/internal/workflows"
-
-	"github.com/spf13/cobra"
 )
 
-const (
-	serviceName = "invocli"
-)
+const serviceName = "invocli"
 
 var configPaths = []string{"~/.invocli/config.yaml", "/etc/invocli/config.yaml", "./config/config.yaml", "config.yaml"}
 
 func main() {
 	if err := run(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		var werr interface {
+			Warn()
+		}
+		if errors.As(err, &werr) {
+			color.HiYellow(err.Error())
+			return
+		}
+
+		color.HiRed(err.Error())
+		var usageErr interface {
+			UsageCmd() *cobra.Command
+		}
+		if errors.As(err, &usageErr) {
+			if err := usageErr.UsageCmd().Usage(); err != nil {
+				color.HiRed(err.Error())
+			}
+		}
 		os.Exit(1)
 	}
 	os.Exit(0)
@@ -43,18 +59,16 @@ func run() error {
 
 	ic := invopop.New(conf.API.Host, conf.API.Token)
 
-	bldr := builder.New(ic, conf)
-	seqs := sequences.New(ic)
-	jobs := jobs.New(ic)
-	tsks := tasks.New(ic)
-	wkfl := workflows.New(ic)
-
-	root := &cobra.Command{Use: serviceName}
-	root.AddCommand(bldr.Command())
-	root.AddCommand(seqs.Command())
-	root.AddCommand(jobs.Command())
-	root.AddCommand(tsks.Command())
-	root.AddCommand(wkfl.Command())
+	root := &cobra.Command{
+		Use:           serviceName,
+		SilenceUsage:  true,
+		SilenceErrors: true,
+	}
+	root.AddCommand(builder.New(ic, conf))
+	root.AddCommand(sequences.New(ic))
+	root.AddCommand(jobs.New(ic))
+	root.AddCommand(tasks.New(ic))
+	root.AddCommand(workflows.New(ic))
 
 	return root.ExecuteContext(ctx)
 }

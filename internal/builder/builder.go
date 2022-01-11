@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"path"
 
-	"github.com/fatih/color"
 	"github.com/ghodss/yaml"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
@@ -18,48 +17,46 @@ import (
 	"github.com/invopop/gobl/bill"
 	"github.com/invopop/gobl/note"
 	"github.com/invopop/gobl/uuid"
+	"github.com/invopop/invocli/internal/cobrax"
 	"github.com/invopop/invocli/internal/config"
 )
 
-// Command keeps together the functionality required to build
+// command keeps together the functionality required to build
 // GOBL documents.
-type Command struct {
+type command struct {
 	client *invopop.Client
 	conf   *config.Config // used for defaults
 }
 
 // New prepares a new builder command
-func New(ic *invopop.Client, conf *config.Config) *Command {
-	c := new(Command)
+func New(ic *invopop.Client, conf *config.Config) *cobra.Command {
+	c := new(command)
 	c.client = ic
 	c.conf = conf
-	return c
-}
 
-func (c *Command) Command() *cobra.Command {
 	return &cobra.Command{
 		Use:   "build [file.yaml]",
 		Short: "Convert the file into a GoBL json document",
-		Args:  cobra.MinimumNArgs(1),
-		Run:   c.build,
+		Args:  cobrax.MinimumNArgs(1),
+		RunE:  c.build,
 	}
 }
 
-func (c *Command) build(cmd *cobra.Command, args []string) {
+func (c *command) build(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	file := args[0]
 
 	env, err := c.buildEnvelope(ctx, file)
 	if err != nil {
-		color.HiRed(err.Error())
-		return
+		return err
 	}
 	if err := c.writeFile(env, file); err != nil {
-		color.HiRed("unable to write file output: %v", err.Error())
+		return fmt.Errorf("unable to write file output: %w", err)
 	}
+	return nil
 }
 
-func (c *Command) buildEnvelope(ctx context.Context, file string) (*gobl.Envelope, error) {
+func (c *command) buildEnvelope(ctx context.Context, file string) (*gobl.Envelope, error) {
 	// Read in the file
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -103,7 +100,7 @@ func (c *Command) buildEnvelope(ctx context.Context, file string) (*gobl.Envelop
 	return env, nil
 }
 
-func (c *Command) buildInvoice(ctx context.Context, env *gobl.Envelope) error {
+func (c *command) buildInvoice(ctx context.Context, env *gobl.Envelope) error {
 	inv := new(bill.Invoice)
 	if err := env.Extract(inv); err != nil {
 		return fmt.Errorf("extracting invoice: %w", err)
@@ -133,7 +130,7 @@ func (c *Command) buildInvoice(ctx context.Context, env *gobl.Envelope) error {
 
 // buildMesage doesn't need to do much, just validates the basic data
 // and outputs a JSON.
-func (c *Command) buildMessage(env *gobl.Envelope) error {
+func (c *command) buildMessage(env *gobl.Envelope) error {
 	msg := new(note.Message)
 	if err := env.Extract(msg); err != nil {
 		return fmt.Errorf("extracting message: %w", err)
@@ -146,7 +143,7 @@ func (c *Command) buildMessage(env *gobl.Envelope) error {
 	return nil
 }
 
-func (c *Command) writeFile(env *gobl.Envelope, file string) error {
+func (c *command) writeFile(env *gobl.Envelope, file string) error {
 	// Output to file
 	out, err := json.MarshalIndent(env, "", "	")
 	if err != nil {
@@ -162,7 +159,7 @@ func (c *Command) writeFile(env *gobl.Envelope, file string) error {
 	return nil
 }
 
-func (c *Command) requestInvoiceSeriesEntry(ctx context.Context, inv *bill.Invoice) error {
+func (c *command) requestInvoiceSeriesEntry(ctx context.Context, inv *bill.Invoice) error {
 	if inv.UUID == nil {
 		return errors.New("cannot request sequence entry without Invoice UUID")
 	}
@@ -175,8 +172,7 @@ func (c *Command) requestInvoiceSeriesEntry(ctx context.Context, inv *bill.Invoi
 	}
 	seriesID, err := p.Run()
 	if err != nil {
-		fmt.Printf("prompt failed: %v\n", err.Error())
-		return err
+		return fmt.Errorf("prompt failed: %w", err)
 	}
 
 	if err := c.client.Sequence.CreateEntry(ctx, seriesID, se); err != nil {

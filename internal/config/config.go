@@ -10,11 +10,13 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
+
 	"github.com/invopop/gobl/dsig"
 	"github.com/invopop/gobl/org"
 	"github.com/invopop/gobl/region"
 )
 
+// Config represents the application configuration.
 type Config struct {
 	Region   region.Code      `json:"region"`
 	Supplier *org.Party       `json:"supplier"`
@@ -24,11 +26,13 @@ type Config struct {
 	SeriesID string `json:"series_id"`
 }
 
+// API is some API info
 type API struct {
 	Host  string `json:"host"`
 	Token string `json:"token"`
 }
 
+// New parses files and returns a config struct.
 func New(files ...string) (*Config, error) {
 	c := new(Config)
 
