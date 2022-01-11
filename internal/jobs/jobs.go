@@ -38,7 +38,7 @@ func New(ic *invopop.Client) *cobra.Command {
 	cmd.AddCommand(&cobra.Command{
 		Use:   "send [workflow ID] [file.json]",
 		Short: "Send a GOBL envelope for processing",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobrax.ExactArgs(2),
 		RunE:  c.send,
 	})
 	cmd.AddCommand(&cobra.Command{
