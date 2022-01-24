@@ -1,4 +1,3 @@
-
 head:
   typ: "bill.Invoice"
 
@@ -7,7 +6,7 @@ doc:
   currency: "EUR"
   code: "INV01000112021"
   issue_date: "2021-10-14"
-  prices_include_tax: false
+  prices_include_tax: true
 
   supplier:
     tax_id:
@@ -31,7 +30,6 @@ doc:
       page: "M-497191"
       entry: "1"
 
-
   customer:
     tax_id:
       country: "ES"
@@ -47,38 +45,48 @@ doc:
         code: "28792"
         country: "ES"
 
-  notes: |-
-    Thank you for your custom! If you require assistance with this invoice please get in touch.
+  notes:
+    - text: |-
+        Thank you for your custom! If you require assistance with this invoice please get in touch.
 
   lines:
-  - quantity: 20
-    item:
-      name: "Development services day rate"
-      price: "200.00"
-    discount:
-      rate: "10.0%"
-      reason: "volume"
-    taxes:
-    - cat: "VAT"
-      code: "STD"
-    - cat: "IRPF"
-      code: "STD"
+    - quantity: 20
+      item:
+        name: "Development services day rate"
+        price: "200.00"
+      discounts:
+        - rate: "10.0%"
+          reason: "volume"
+      taxes:
+        - cat: "VAT"
+          code: "STD"
+        - cat: "IRPF"
+          code: "STD"
+
+  charges:
+    - rate: "5.0%"
+      reason: "Management fee"
+      taxes:
+        - cat: "VAT"
+          code: "STD"
+    - amount: "2.00"
+      reason: "Tourism fee"
 
   payment:
     terms:
       code: "due_date"
       due_dates:
-      - date: "2021-10-30"
-        percent: "40%"
-      - date: "2021-11-30"
-        percent: "60%"
+        - date: "2021-10-30"
+          percent: "40%"
+        - date: "2021-11-30"
+          percent: "60%"
     advances:
-    - date: "2021-09-01" 
-      desc: "Deposit paid upfront"
-      amount: "250.00"
+      - date: "2021-09-01"
+        desc: "Deposit paid upfront"
+        amount: "250.00"
     instructions:
       code: "credit_transfer"
       credit_transfer:
-      - name: "Bankinter"
-        iban: "ES06 0128 0011 3901 0008 1391"
-        bic: "BKBKESMMXXX"
+        - name: "Bankinter"
+          iban: "ES06 0128 0011 3901 0008 1391"
+          bic: "BKBKESMMXXX"

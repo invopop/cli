@@ -1,4 +1,3 @@
-
 head:
   typ: "bill.Invoice"
 
@@ -7,7 +6,7 @@ doc:
   currency: "EUR"
   code: "INV2021-001"
   issue_date: "2021-06-16"
-  prices_include_tax: false
+  prices_include_tax: "" # "VAT"
 
   customer:
     tax_id:
@@ -25,48 +24,57 @@ doc:
         country: "ES"
 
   lines:
-  - quantity: 20
-    item:
-      name: "Development services day rate"
-      price: "200.00"
-    discount:
-      # rate: "10.0%"
-      value: "200.00"
-      reason: "just because"
-    taxes:
-    - cat: "VAT"
-      code: "STD"
-    - cat: "IRPF"
-      code: "STD"
-  - quantity: 10
-    item:
-      name: "Something random"
-      price: "100.00"
-    taxes:
-    - cat: "VAT"
-      code: "STD"
-  - quantity: 5
-    item:
-      name: "Additional random services"
-      price: "34.50"
-    taxes:
-    - cat: "VAT"
-      code: "RED"
-    #- cat: "IRPF"
-    #  code: "STD" 
-  - quantity: 3
-    item:
-      name: "Impuesto local"
-      price: "5.00"
+    - quantity: 20
+      item:
+        name: "Development services day rate"
+        price: "200.00"
+      discount:
+        # rate: "10.0%"
+        amount: "200.00"
+        reason: "just because"
+      taxes:
+        - cat: "VAT"
+          code: "STD"
+        - cat: "VATEQS"
+          code: "STD"
+        - cat: "IRPF"
+          code: "STD"
+    - quantity: 10
+      item:
+        name: "Something random"
+        price: "100.00"
+      taxes:
+        - cat: "VAT"
+          code: "RED"
+        - cat: "VATEQS"
+          code: "RED"
+        - cat: "IRPF"
+          code: "STD"
+
+  discounts:
+    - reason: "Early payment"
+      rate: "2.0%"
+      taxes:
+        - cat: "VAT"
+          code: "STD"
+        - cat: "VATEQS"
+          code: "STD"
+        - cat: "IRPF"
+          code: "STD"
+
+  charges:
+    - reason: "Impuesto local"
+      amount: "5.00"
+
   outlays:
-  - desc: "Something paid for by us"
-    paid: "200.00" 
+    - desc: "Something paid for by us"
+      paid: "200.00"
 
   payment:
-    terms:  
+    terms:
       code: "instant"
     instructions:
       code: "credit_transfer"
       credit_transfer:
-      - name: "Bankinter"
-        iban: "ES06 0128 0011 3901 0008 1391"
+        - name: "Bankinter"
+          iban: "ES06 0128 0011 3901 0008 1391"

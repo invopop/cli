@@ -1,10 +1,10 @@
-
 head:
   typ: "bill.Invoice"
 
 doc:
   currency: "EUR"
   issue_date: "2021-12-08"
+  code: "TEST01001F"
   prices_include_tax: false
 
   customer:
@@ -23,24 +23,24 @@ doc:
         country: "ES"
 
   lines:
-  - quantity: 1
-    item:
-      name: "September 2021 - Operations and development - monthly rate"
-      price: "4170.00"
-    taxes:
-    - cat: "VAT"
-      code: "STD"
-  - quantity: 2
-    item:
-      name: "Additional overtime"
-      price: "101.00"
-    taxes:
-    - cat: "VAT"
-      code: "STD"
+    - quantity: 1
+      item:
+        name: "September 2021 - Operations and development - monthly rate"
+        price: "4170.00"
+      taxes:
+        - cat: "VAT"
+          code: "STD"
+    - quantity: 2
+      item:
+        name: "Additional overtime"
+        price: "101.00"
+      taxes:
+        - cat: "VAT"
+          code: "STD"
 
   payment:
     instructions:
       code: "credit_transfer"
       credit_transfer:
-      - name: "Bankinter"
-        iban: "ES06 0128 0011 3901 0008 1391"
+        - name: "Bankinter"
+          iban: "ES06 0128 0011 3901 0008 1391"

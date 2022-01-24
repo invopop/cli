@@ -1,4 +1,3 @@
-
 head:
   typ: "bill.Invoice"
 
@@ -25,15 +24,15 @@ doc:
         country: "ES"
 
   lines:
-  - quantity: 20
-    item:
-      name: "Development services day rate"
-      price: "200.00"
-    discount:
-      rate: "10.0%"
-      reason: "volume"
-    taxes:
-    - cat: "VAT"
-      code: "STD"
-    - cat: "IRPF"
-      code: "STD"
+    - quantity: 20
+      item:
+        name: "Development services day rate"
+        price: "200.00"
+      discounts:
+        - rate: "10.0%"
+          reason: "volume"
+      taxes:
+        - cat: "VAT"
+          code: "STD"
+        - cat: "IRPF"
+          code: "STD"
