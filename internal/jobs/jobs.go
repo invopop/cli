@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -51,7 +52,6 @@ func New(ic *invopop.Client) *cobra.Command {
 }
 
 func (c *command) send(cmd *cobra.Command, args []string) error {
-	ctx := cmd.Context()
 	j := new(invopop.Job)
 	j.ID = uuid.NewV1().String()
 	j.WorkflowID = args[0]
@@ -67,6 +67,8 @@ func (c *command) send(cmd *cobra.Command, args []string) error {
 	}
 	j.Envelope = data
 
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*61))
+	defer cancel()
 	if err := c.client.Transform.CreateJob(ctx, j, invopop.WithWait(60)); err != nil {
 		return fmt.Errorf("failed to create job: %w", err)
 	}

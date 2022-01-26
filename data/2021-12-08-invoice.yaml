@@ -5,7 +5,7 @@ doc:
   currency: "EUR"
   issue_date: "2021-12-08"
   code: "TEST01001F"
-  prices_include_tax: false
+  prices_include_tax: ""
 
   customer:
     tax_id:
