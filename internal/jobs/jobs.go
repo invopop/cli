@@ -67,7 +67,7 @@ func (c *command) send(cmd *cobra.Command, args []string) error {
 	}
 	j.Envelope = data
 
-	ctx, cancel := context.WithTimeout(cmd.Context(), time.Duration(time.Second*61))
+	ctx, cancel := context.WithTimeout(cmd.Context(), time.Second*61)
 	defer cancel()
 	if err := c.client.Transform.CreateJob(ctx, j, invopop.WithWait(60)); err != nil {
 		return fmt.Errorf("failed to create job: %w", err)
