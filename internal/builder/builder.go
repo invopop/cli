@@ -64,7 +64,7 @@ func (c *command) buildEnvelope(ctx context.Context, file string) (*gobl.Envelop
 	}
 
 	// Parse as a GoBL document
-	env := gobl.NewEnvelope(c.conf.Region)
+	env := gobl.NewEnvelope()
 	if err := yaml.Unmarshal(data, env); err != nil {
 		return nil, fmt.Errorf("parsing source YAML: %w", err)
 	}
@@ -78,17 +78,17 @@ func (c *command) buildEnvelope(ctx context.Context, file string) (*gobl.Envelop
 		env.Head.UUID = uuid.NewV1()
 	}
 
-	switch env.Head.Type {
-	case bill.InvoiceType:
+	switch env.Document.Schema.Interface().(type) {
+	case *bill.Invoice:
 		if err := c.buildInvoice(ctx, env); err != nil {
 			return nil, err
 		}
-	case note.MessageType:
+	case *note.Message:
 		if err := c.buildMessage(env); err != nil {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("unrecognized envelope type: %q", env.Head.Type)
+		return nil, fmt.Errorf("unrecognized envelope schema: %v", env.Document.Schema)
 	}
 
 	if err := env.Sign(c.conf.Key); err != nil {
@@ -102,6 +102,7 @@ func (c *command) buildEnvelope(ctx context.Context, file string) (*gobl.Envelop
 
 func (c *command) buildInvoice(ctx context.Context, env *gobl.Envelope) error {
 	inv := new(bill.Invoice)
+
 	if err := env.Extract(inv); err != nil {
 		return fmt.Errorf("extracting invoice: %w", err)
 	}
@@ -131,16 +132,7 @@ func (c *command) buildInvoice(ctx context.Context, env *gobl.Envelope) error {
 // buildMesage doesn't need to do much, just validates the basic data
 // and outputs a JSON.
 func (c *command) buildMessage(env *gobl.Envelope) error {
-	msg := new(note.Message)
-	if err := env.Extract(msg); err != nil {
-		return fmt.Errorf("extracting message: %w", err)
-	}
-
-	if err := env.Insert(msg); err != nil {
-		return fmt.Errorf("inserting message into envelope: %w", err)
-	}
-
-	return nil
+	return env.Complete()
 }
 
 func (c *command) writeFile(env *gobl.Envelope, file string) error {

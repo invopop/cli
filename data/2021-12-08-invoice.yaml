@@ -30,6 +30,9 @@ doc:
       taxes:
         - cat: "VAT"
           code: "STD"
+      discounts:
+        - rate: "5.0%"
+          reason: "Bonus"
     - quantity: 2
       item:
         name: "Additional overtime"

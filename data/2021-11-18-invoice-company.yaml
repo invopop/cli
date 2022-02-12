@@ -6,7 +6,6 @@ doc:
   currency: "EUR"
   code: "INV01000112021"
   issue_date: "2021-10-14"
-  prices_include_tax: true
 
   supplier:
     tax_id:

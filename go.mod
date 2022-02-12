@@ -12,9 +12,8 @@ require (
 	github.com/spf13/cobra v1.3.0
 	github.com/stretchr/testify v1.7.0
 	gitlab.com/flimzy/testy v0.9.1
-	golang.org/x/net v0.0.0-20210913180222-943fd674d43e // indirect
 )
 
-// replace github.com/invopop/gobl => /home/sam/workspace/invopop/gobl
+replace github.com/invopop/gobl => /home/sam/workspace/invopop/gobl
 
 // replace github.com/invopop/client.go => /home/sam/workspace/invopop/client.go
