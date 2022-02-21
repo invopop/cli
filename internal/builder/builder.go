@@ -147,7 +147,7 @@ func (c *command) writeFile(env *gobl.Envelope, file string) error {
 		return fmt.Errorf("writing json output: %w", err)
 	}
 
-	fmt.Printf("invoice created successfully: %v\n", outfile)
+	fmt.Printf("document created successfully: %v\n", outfile)
 	return nil
 }
 
