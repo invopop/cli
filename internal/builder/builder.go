@@ -78,9 +78,9 @@ func (c *command) buildEnvelope(ctx context.Context, file string) (*gobl.Envelop
 		env.Head.UUID = uuid.NewV1()
 	}
 
-	switch env.Document.Schema.Interface().(type) {
+	switch obj := env.Extract().(type) {
 	case *bill.Invoice:
-		if err := c.buildInvoice(ctx, env); err != nil {
+		if err := c.buildInvoice(ctx, env, obj); err != nil {
 			return nil, err
 		}
 	case *note.Message:
@@ -100,13 +100,7 @@ func (c *command) buildEnvelope(ctx context.Context, file string) (*gobl.Envelop
 	return env, nil
 }
 
-func (c *command) buildInvoice(ctx context.Context, env *gobl.Envelope) error {
-	inv := new(bill.Invoice)
-
-	if err := env.Extract(inv); err != nil {
-		return fmt.Errorf("extracting invoice: %w", err)
-	}
-
+func (c *command) buildInvoice(ctx context.Context, env *gobl.Envelope, inv *bill.Invoice) error {
 	// Merge our configuration details to complete the invoice details
 	if inv.Code == "" {
 		if inv.UUID == nil {
@@ -121,8 +115,8 @@ func (c *command) buildInvoice(ctx context.Context, env *gobl.Envelope) error {
 		inv.Supplier = c.conf.Supplier
 	}
 
-	// re-insert
-	if err := env.Insert(inv); err != nil {
+	// complete
+	if err := env.Complete(); err != nil {
 		return fmt.Errorf("inserting invoice into envelope: %w", err)
 	}
 

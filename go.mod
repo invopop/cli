@@ -7,7 +7,7 @@ require (
 	github.com/fatih/color v1.13.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/invopop/client.go v0.10.0
-	github.com/invopop/gobl v0.17.0
+	github.com/invopop/gobl v0.17.1-0.20220221224703-74c4546491b6
 	github.com/manifoldco/promptui v0.9.0
 	github.com/rodaine/table v1.0.1
 	github.com/spf13/cobra v1.3.0
