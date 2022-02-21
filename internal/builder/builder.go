@@ -88,7 +88,7 @@ func (c *command) buildEnvelope(ctx context.Context, file string) (*gobl.Envelop
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("unrecognized envelope schema: %v", env.Document.Schema)
+		return nil, fmt.Errorf("unrecognized envelope schema: %v", env.Document.Schema())
 	}
 
 	if err := env.Sign(c.conf.Key); err != nil {
