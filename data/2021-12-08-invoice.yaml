@@ -1,9 +1,8 @@
-head:
-  typ: "bill.Invoice"
-
 doc:
+  $schema: "https://gobl.org/draft-0/bill/invoice"
   currency: "EUR"
   issue_date: "2021-12-08"
+  region: "ES"
   code: "TEST01001F"
   prices_include_tax: ""
 
@@ -30,6 +29,9 @@ doc:
       taxes:
         - cat: "VAT"
           code: "STD"
+      discounts:
+        - rate: "5.0%"
+          reason: "Bonus"
     - quantity: 2
       item:
         name: "Additional overtime"

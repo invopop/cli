@@ -1,8 +1,5 @@
-
-head:
-  typ: "bill.Invoice"
-
 doc:
+  $schema: "https://gobl.org/draft-0/bill/invoice"
   currency: "EUR"
   issue_date: "2021-11-25"
   prices_include_tax: false
@@ -23,17 +20,17 @@ doc:
         country: "ES"
 
   lines:
-  - quantity: 1
-    item:
-      name: "September 2021 - Operations and development - monthly rate"
-      price: "4170.00"
-    taxes:
-    - cat: "VAT"
-      code: "STD"
+    - quantity: 1
+      item:
+        name: "September 2021 - Operations and development - monthly rate"
+        price: "4170.00"
+      taxes:
+        - cat: "VAT"
+          code: "STD"
 
   payment:
     instructions:
       code: "credit_transfer"
       credit_transfer:
-      - name: "Bankinter"
-        iban: "ES06 0128 0011 3901 0008 1391"
+        - name: "Bankinter"
+          iban: "ES06 0128 0011 3901 0008 1391"

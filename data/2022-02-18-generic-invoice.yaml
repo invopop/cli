@@ -1,0 +1,53 @@
+doc:
+  $schema: "https://gobl.org/draft-0/bill/invoice"
+  currency: "EUR"
+  region: "ES"
+  issue_date: "2022-02-01"
+  code: "FAKE20220001"
+  prices_include_tax: ""
+
+  supplier:
+    tax_id:
+      country: "ES"
+      code: "B28774008"
+    name: "Biz España S.L."
+    emails:
+      - addr: "billing@bizspain.es"
+    addresses:
+      - num: "42"
+        street: "Calle Pradillo"
+        locality: "Madrid"
+        region: "Madrid"
+        code: "28002"
+        country: "ES"
+
+  customer:
+    tax_id:
+      country: "ES"
+      code: "B33105842"
+    name: "Customer Spain S.L."
+    emails:
+      - addr: "sam@customer.com"
+    addresses:
+      - num: "10"
+        street: "Calle Mayor"
+        locality: "Madrid"
+        region: "Madrid"
+        code: "28003"
+        country: "ES"
+
+  lines:
+    - quantity: 100
+      item:
+        name: "Promotional mug"
+        price: "16.00"
+      taxes:
+        - cat: "VAT"
+          code: "STD"
+
+  payment:
+    instructions:
+      code: "credit_transfer"
+      credit_transfer:
+        - name: "RANDOM"
+          iban: "ES31 0240 4036 4573 9340 5564"
