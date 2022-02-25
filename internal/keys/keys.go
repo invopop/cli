@@ -14,6 +14,7 @@ import (
 type command struct {
 }
 
+// New prepares a new command line parser for keys.
 func New() *cobra.Command {
 	c := new(command)
 
