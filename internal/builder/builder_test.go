@@ -39,7 +39,7 @@ func Test_buildEnvelope(t *testing.T) {
 		{
 			name: "unsupported type",
 			file: "testdata/unsupportedtype.yaml",
-			err:  `unrecognized envelope schema: https://gobl.org/draft-0/bill/oink`,
+			err:  `parsing source YAML: error unmarshaling JSON: marshal: unregistered schema: https://gobl.org/draft-0/bill/oink`,
 		},
 		{
 			name: "empty doc",
