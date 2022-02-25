@@ -15,6 +15,7 @@ import (
 	"github.com/invopop/invocli/internal/builder"
 	"github.com/invopop/invocli/internal/config"
 	"github.com/invopop/invocli/internal/jobs"
+	"github.com/invopop/invocli/internal/keys"
 	"github.com/invopop/invocli/internal/sequences"
 	"github.com/invopop/invocli/internal/tasks"
 	"github.com/invopop/invocli/internal/workflows"
@@ -69,6 +70,7 @@ func run() error {
 	root.AddCommand(jobs.New(ic))
 	root.AddCommand(tasks.New(ic))
 	root.AddCommand(workflows.New(ic))
+	root.AddCommand(keys.New())
 
 	return root.ExecuteContext(ctx)
 }

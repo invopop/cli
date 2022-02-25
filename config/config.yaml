@@ -3,7 +3,7 @@
 # to this region.
 region: "ES"
 
-# Our company details
+# Sample supplier details for Invoices.
 supplier:
   tax_id:
     country: "ES"
