@@ -1,4 +1,4 @@
-package tasks
+package connectors
 
 import (
 	"encoding/json"
@@ -15,7 +15,7 @@ import (
 	"github.com/invopop/invocli/internal/warn"
 )
 
-// command keeps together the functionality required for tasks.
+// command keeps together the functionality required for connectors.
 type command struct {
 	client *invopop.Client
 }
@@ -26,20 +26,20 @@ func New(ic *invopop.Client) *cobra.Command {
 	c.client = ic
 
 	cmd := &cobra.Command{
-		Use:   "task",
-		Short: "Create and manage tasks",
+		Use:   "connector",
+		Short: "Create and manage connectors",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return cobrax.Usage(cmd, "choose a task operation")
+			return cobrax.Usage(cmd, "choose a connector operation")
 		},
 	}
 	cmd.AddCommand(&cobra.Command{
 		Use:   "list",
-		Short: "Produce a table of all the current tasks.",
+		Short: "Produce a table of all the current connectors.",
 		RunE:  c.list,
 	})
 	cmd.AddCommand(&cobra.Command{
 		Use:   "create",
-		Short: "Create a new task.",
+		Short: "Create a new connector.",
 		RunE:  c.create,
 	})
 
@@ -48,12 +48,12 @@ func New(ic *invopop.Client) *cobra.Command {
 
 func (c *command) list(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	col := new(invopop.TaskCollection)
-	if err := c.client.Transform.ListTasks(ctx, col); err != nil {
+	col := new(invopop.ConnectorCollection)
+	if err := c.client.Transform().ListConnectors(ctx, col); err != nil {
 		return err
 	}
 	if len(col.List) == 0 {
-		return warn.Warn("No tasks found")
+		return warn.Warn("No connectors found")
 	}
 
 	tbl := table.New("ID", "Name", "Notes", "Disabled", "Config", "Created At")
@@ -70,25 +70,25 @@ func (c *command) list(cmd *cobra.Command, args []string) error {
 func (c *command) create(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	var err error
-	t := new(invopop.Task)
+	t := new(invopop.Connector)
 	t.ID = uuid.NewV4().String()
 
 	p := promptui.Prompt{
-		Label: "Task Name",
+		Label: "Connector Name",
 	}
 	t.Name, err = p.Run()
 	if err != nil {
 		return fmt.Errorf("prompt failed: %w", err)
 	}
 	p = promptui.Prompt{
-		Label: "Task Notes",
+		Label: "Notes",
 	}
 	t.Notes, err = p.Run()
 	if err != nil {
 		return fmt.Errorf("prompt failed: %w", err)
 	}
 	ps := promptui.SelectWithAdd{
-		Label:    "Task Provider",
+		Label:    "Provider",
 		Items:    []string{"core-tag", "core-markdown", "es-bill-pdf"},
 		AddLabel: "Other",
 	}
@@ -97,7 +97,7 @@ func (c *command) create(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("prompt failed: %w", err)
 	}
 	p = promptui.Prompt{
-		Label: "Task Configuration (JSON)",
+		Label: "Connector Configuration (JSON)",
 	}
 	data, err := p.Run()
 	if err != nil {
@@ -107,11 +107,11 @@ func (c *command) create(cmd *cobra.Command, args []string) error {
 		t.Config = json.RawMessage(data)
 	}
 
-	if err := c.client.Transform.CreateTask(ctx, t); err != nil {
-		return fmt.Errorf("creating task failed: %w", err)
+	if err := c.client.Transform().CreateConnector(ctx, t); err != nil {
+		return fmt.Errorf("creating connector failed: %w", err)
 	}
 
-	color.HiGreen("Task created successfully")
+	color.HiGreen("Connector created successfully")
 	d, _ := json.MarshalIndent(t, "", "    ")
 	fmt.Println(string(d))
 	return nil

@@ -55,7 +55,7 @@ func New(ic *invopop.Client) *cobra.Command {
 func (c *command) list(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	sc := new(invopop.SeriesCollection)
-	if err := c.client.Sequence.ListSeries(ctx, sc); err != nil {
+	if err := c.client.Sequence().ListSeries(ctx, sc); err != nil {
 		return err
 	}
 
@@ -130,7 +130,7 @@ func (c *command) create(cmd *cobra.Command, args []string) error {
 		s.Start = int32(si)
 	}
 
-	if err := c.client.Sequence.CreateSeries(ctx, s); err != nil {
+	if err := c.client.Sequence().CreateSeries(ctx, s); err != nil {
 		return err
 	}
 
@@ -145,7 +145,7 @@ func (c *command) next(cmd *cobra.Command, args []string) error {
 
 	se := new(invopop.SeriesEntry)
 	se.ID = uuid.NewV1().String()
-	if err := c.client.Sequence.CreateEntry(ctx, seriesID, se); err != nil {
+	if err := c.client.Sequence().CreateEntry(ctx, seriesID, se); err != nil {
 		return err
 	}
 

@@ -69,7 +69,7 @@ func (c *command) send(cmd *cobra.Command, args []string) error {
 
 	ctx, cancel := context.WithTimeout(cmd.Context(), time.Second*61)
 	defer cancel()
-	if err := c.client.Transform.CreateJob(ctx, j, invopop.WithWait(60)); err != nil {
+	if err := c.client.Transform().CreateJob(ctx, j, invopop.WithWait(60)); err != nil {
 		return fmt.Errorf("failed to create job: %w", err)
 	}
 
@@ -97,7 +97,7 @@ func (c *command) download(cmd *cobra.Command, args []string) error {
 	j := new(invopop.Job)
 	j.ID = args[0]
 
-	if err := c.client.Transform.FetchJob(ctx, j); err != nil {
+	if err := c.client.Transform().FetchJob(ctx, j); err != nil {
 		return fmt.Errorf("failed to fetch job: %w", err)
 	}
 

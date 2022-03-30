@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/fatih/color v1.13.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/invopop/client.go v0.10.0
+	github.com/invopop/client.go v0.12.0
 	github.com/invopop/gobl v0.18.0
 	github.com/manifoldco/promptui v0.9.0
 	github.com/rodaine/table v1.0.1
