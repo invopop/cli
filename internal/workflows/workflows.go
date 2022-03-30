@@ -50,7 +50,7 @@ func (c *command) list(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
 	wc := new(invopop.WorkflowCollection)
-	if err := c.client.Transform.ListWorkflows(ctx, wc); err != nil {
+	if err := c.client.Transform().ListWorkflows(ctx, wc); err != nil {
 		return err
 	}
 
@@ -58,12 +58,12 @@ func (c *command) list(cmd *cobra.Command, args []string) error {
 		return warn.Warn("No workflows found")
 	}
 
-	tbl := table.New("ID", "Name", "Desc", "Disabled", "Task IDs", "Created At")
+	tbl := table.New("ID", "Name", "Desc", "Disabled", "Connector IDs", "Created At")
 	tbl.
 		WithHeaderFormatter(color.New(color.FgGreen, color.Underline).SprintfFunc()).
 		WithFirstColumnFormatter(color.New(color.FgYellow).SprintfFunc())
 	for _, w := range wc.List {
-		tbl.AddRow(w.ID, w.Name, w.Description, w.Disabled, w.TaskIDs, w.CreatedAt)
+		tbl.AddRow(w.ID, w.Name, w.Description, w.Disabled, w.ConnectorIDs, w.CreatedAt)
 	}
 	tbl.Print()
 	return nil
@@ -90,18 +90,18 @@ func (c *command) create(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("prompt failed: %w", err)
 	}
 
-	// Fetch a list of tasks
-	tc := new(invopop.TaskCollection)
-	if err := c.client.Transform.ListTasks(ctx, tc); err != nil {
+	// Fetch a list of Connectors
+	tc := new(invopop.ConnectorCollection)
+	if err := c.client.Transform().ListConnectors(ctx, tc); err != nil {
 		return fmt.Errorf("index failed: %w", err)
 	}
 	ary := make([]string, 0)
-	w.TaskIDs, err = c.taskLoop(ary, tc)
+	w.ConnectorIDs, err = c.connectorLoop(ary, tc)
 	if err != nil {
 		return fmt.Errorf("prompt failed: %w", err)
 	}
 
-	if err := c.client.Transform.CreateWorkflow(ctx, w); err != nil {
+	if err := c.client.Transform().CreateWorkflow(ctx, w); err != nil {
 		return fmt.Errorf("creating workflow failed: %w", err)
 	}
 
@@ -111,8 +111,8 @@ func (c *command) create(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// taskLoop helps ask for an array of tasks
-func (c *command) taskLoop(ary []string, tc *invopop.TaskCollection) ([]string, error) {
+// connectorLoop helps ask for an array of connectors
+func (c *command) connectorLoop(ary []string, tc *invopop.ConnectorCollection) ([]string, error) {
 	list := make([]string, len(tc.List))
 	for i, t := range tc.List {
 		list[i] = fmt.Sprintf("%s- %s", t.ID, t.Name)
@@ -120,7 +120,7 @@ func (c *command) taskLoop(ary []string, tc *invopop.TaskCollection) ([]string, 
 	list = append(list, "none")
 
 	ps := promptui.Select{
-		Label: fmt.Sprintf("Add Task %d", len(ary)+1),
+		Label: fmt.Sprintf("Add Connector %d", len(ary)+1),
 		Items: list,
 	}
 	i, _, err := ps.Run()
@@ -136,5 +136,5 @@ func (c *command) taskLoop(ary []string, tc *invopop.TaskCollection) ([]string, 
 	// Remove the selected entry
 	tc.List = append(tc.List[:i], tc.List[i+1:]...)
 
-	return c.taskLoop(ary, tc)
+	return c.connectorLoop(ary, tc)
 }
