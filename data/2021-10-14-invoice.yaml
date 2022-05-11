@@ -31,6 +31,6 @@ doc:
           reason: "volume"
       taxes:
         - cat: "VAT"
-          code: "STD"
+          rate: "standard"
         - cat: "IRPF"
-          code: "STD"
+          rate: "standard"

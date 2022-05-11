@@ -4,7 +4,8 @@ doc:
   currency: "EUR"
   code: "INV2021-001"
   issue_date: "2021-06-16"
-  prices_include_tax: "VAT"
+  tax:
+    prices_include: VAT
 
   customer:
     tax_id:
@@ -32,33 +33,33 @@ doc:
         reason: "just because"
       taxes:
         - cat: "VAT"
-          code: "STD"
+          rate: "standard"
         - cat: "VATEQS"
-          code: "STD"
+          rate: "standard"
         - cat: "IRPF"
-          code: "STD"
+          rate: "pro"
     - quantity: 10
       item:
         name: "Something random"
         price: "100.00"
       taxes:
         - cat: "VAT"
-          code: "RED"
+          rate: "reduced"
         - cat: "VATEQS"
-          code: "RED"
+          rate: "reduced"
         - cat: "IRPF"
-          code: "STD"
+          rate: "pro"
 
   discounts:
     - reason: "Early payment"
       rate: "2.0%"
       taxes:
         - cat: "VAT"
-          code: "STD"
+          rate: "standard"
         - cat: "VATEQS"
-          code: "STD"
+          rate: "standard"
         - cat: "IRPF"
-          code: "STD"
+          rate: "pro"
 
   charges:
     - reason: "Impuesto local"

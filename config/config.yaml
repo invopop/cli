@@ -1,8 +1,3 @@
-# Region determines the tax details and validation rules that should be considered
-# for the envelopes. The supplier's Tax ID Country must be related
-# to this region.
-region: "ES"
-
 # Sample supplier details for Invoices.
 supplier:
   tax_id:
