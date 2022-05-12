@@ -28,9 +28,9 @@ doc:
         price: "4170.00"
       taxes:
         - cat: "VAT"
-          code: "STD"
+          rate: "standard"
       discounts:
-        - rate: "5.0%"
+        - percent: "5.0%"
           reason: "Bonus"
     - quantity: 2
       item:
@@ -38,7 +38,7 @@ doc:
         price: "101.00"
       taxes:
         - cat: "VAT"
-          code: "STD"
+          rate: "standard"
 
   payment:
     instructions:

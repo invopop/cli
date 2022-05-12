@@ -52,20 +52,20 @@ doc:
         name: "Development services day rate"
         price: "200.00"
       discounts:
-        - rate: "10.0%"
+        - percent: "10.0%"
           reason: "volume"
       taxes:
         - cat: "VAT"
-          code: "STD"
+          rate: "standard"
         - cat: "IRPF"
-          code: "STD"
+          rate: "standard"
 
   charges:
     - rate: "5.0%"
       reason: "Management fee"
       taxes:
         - cat: "VAT"
-          code: "STD"
+          rate: "standard"
     - amount: "2.00"
       reason: "Tourism fee"
 

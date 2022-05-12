@@ -4,7 +4,8 @@ doc:
   region: "ES"
   issue_date: "2022-02-01"
   code: "FAKE20220001"
-  prices_include_tax: ""
+  tax:
+    prices_include: "VAT"
 
   supplier:
     tax_id:
@@ -43,7 +44,7 @@ doc:
         price: "16.00"
       taxes:
         - cat: "VAT"
-          code: "STD"
+          rate: "standard"
 
   payment:
     instructions:

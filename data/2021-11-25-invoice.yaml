@@ -2,7 +2,6 @@ doc:
   $schema: "https://gobl.org/draft-0/bill/invoice"
   currency: "EUR"
   issue_date: "2021-11-25"
-  prices_include_tax: false
 
   customer:
     tax_id:
@@ -26,7 +25,7 @@ doc:
         price: "4170.00"
       taxes:
         - cat: "VAT"
-          code: "STD"
+          rate: "standard"
 
   payment:
     instructions:

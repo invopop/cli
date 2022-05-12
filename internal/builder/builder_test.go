@@ -39,7 +39,7 @@ func Test_buildEnvelope(t *testing.T) {
 		{
 			name: "unsupported type",
 			file: "testdata/unsupportedtype.yaml",
-			err:  `parsing source YAML: error unmarshaling JSON: marshal: unregistered schema: https://gobl.org/draft-0/bill/oink`,
+			err:  `parsing source YAML: error unmarshaling JSON: marshal: unregistered or invalid schema`,
 		},
 		{
 			name: "empty doc",
@@ -54,9 +54,7 @@ func Test_buildEnvelope(t *testing.T) {
 			t.Parallel()
 
 			c := &command{
-				conf: &config.Config{
-					Region: "ES",
-				},
+				conf: &config.Config{},
 			}
 			env, err := c.buildEnvelope(context.Background(), tt.file)
 			if tt.err != "" || err != nil {

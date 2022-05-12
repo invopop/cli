@@ -13,12 +13,10 @@ import (
 
 	"github.com/invopop/gobl/dsig"
 	"github.com/invopop/gobl/org"
-	"github.com/invopop/gobl/region"
 )
 
 // Config represents the application configuration.
 type Config struct {
-	Region   region.Code      `json:"region"`
 	Supplier *org.Party       `json:"supplier"`
 	Key      *dsig.PrivateKey `json:"key"`
 	API      *API             `json:"api"`
