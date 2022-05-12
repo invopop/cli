@@ -52,7 +52,7 @@ doc:
         name: "Development services day rate"
         price: "200.00"
       discounts:
-        - rate: "10.0%"
+        - percent: "10.0%"
           reason: "volume"
       taxes:
         - cat: "VAT"

@@ -30,7 +30,7 @@ doc:
         - cat: "VAT"
           rate: "standard"
       discounts:
-        - rate: "5.0%"
+        - percent: "5.0%"
           reason: "Bonus"
     - quantity: 2
       item:

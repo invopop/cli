@@ -7,7 +7,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/invopop/client.go v0.12.0
-	github.com/invopop/gobl v0.21.1
+	github.com/invopop/gobl v0.22.0
 	github.com/labstack/echo/v4 v4.6.3 // indirect
 	github.com/manifoldco/promptui v0.9.0
 	github.com/rodaine/table v1.0.1
