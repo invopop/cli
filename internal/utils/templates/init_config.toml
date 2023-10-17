@@ -17,6 +17,10 @@ extra_search_path = ["public", "extensions"]
 # for accidental or malicious requests.
 max_rows = 1000
 
+[api.labels]
+# Docker labels to add to the api container
+# "traefik.http.routers.api.rule" = "Host(`api.supabase.localhost`)"
+
 [db]
 # Port to use for the local database URL.
 port = 54322

@@ -200,22 +200,24 @@ type (
 	}
 
 	api struct {
-		Enabled         bool     `toml:"enabled"`
-		Image           string   `toml:"-"`
-		Port            uint     `toml:"port"`
-		Schemas         []string `toml:"schemas"`
-		ExtraSearchPath []string `toml:"extra_search_path"`
-		MaxRows         uint     `toml:"max_rows"`
+		Enabled         bool              `toml:"enabled"`
+		Image           string            `toml:"-"`
+		Port            uint              `toml:"port"`
+		Schemas         []string          `toml:"schemas"`
+		ExtraSearchPath []string          `toml:"extra_search_path"`
+		MaxRows         uint              `toml:"max_rows"`
+		Labels          map[string]string `toml:"labels"`
 	}
 
 	db struct {
-		Image        string `toml:"-"`
-		Port         uint   `toml:"port"`
-		ShadowPort   uint   `toml:"shadow_port"`
-		MajorVersion uint   `toml:"major_version"`
-		Password     string `toml:"-"`
-		RootKey      string `toml:"-" mapstructure:"root_key"`
-		Pooler       pooler `toml:"pooler"`
+		Image        string            `toml:"-"`
+		Port         uint              `toml:"port"`
+		ShadowPort   uint              `toml:"shadow_port"`
+		MajorVersion uint              `toml:"major_version"`
+		Password     string            `toml:"-"`
+		RootKey      string            `toml:"-" mapstructure:"root_key"`
+		Pooler       pooler            `toml:"pooler"`
+		Labels       map[string]string `toml:"labels"`
 	}
 
 	pooler struct {
@@ -232,9 +234,10 @@ type (
 	}
 
 	studio struct {
-		Enabled bool   `toml:"enabled"`
-		Port    uint   `toml:"port"`
-		ApiUrl  string `toml:"api_url"`
+		Enabled bool              `toml:"enabled"`
+		Port    uint              `toml:"port"`
+		ApiUrl  string            `toml:"api_url"`
+		Labels  map[string]string `toml:"labels"`
 	}
 
 	inbucket struct {
@@ -245,9 +248,10 @@ type (
 	}
 
 	storage struct {
-		Enabled       bool        `toml:"enabled"`
-		Image         string      `toml:"-"`
-		FileSizeLimit sizeInBytes `toml:"file_size_limit"`
+		Enabled       bool              `toml:"enabled"`
+		Image         string            `toml:"-"`
+		FileSizeLimit sizeInBytes       `toml:"file_size_limit"`
+		Labels        map[string]string `toml:"labels"`
 	}
 
 	auth struct {
@@ -269,6 +273,8 @@ type (
 		JwtSecret      string `toml:"-" mapstructure:"jwt_secret"`
 		AnonKey        string `toml:"-" mapstructure:"anon_key"`
 		ServiceRoleKey string `toml:"-" mapstructure:"service_role_key"`
+
+		Labels map[string]string `toml:"labels"`
 	}
 
 	email struct {

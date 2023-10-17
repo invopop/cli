@@ -340,6 +340,7 @@ EOF
 					"KONG_NGINX_PROXY_PROXY_BUFFERS=64 160k",
 					"KONG_NGINX_WORKER_PROCESSES=1",
 				},
+				Labels: utils.Config.Api.Labels,
 				Entrypoint: []string{"sh", "-c", `cat <<'EOF' > /home/kong/kong.yml && cat <<'EOF' > /home/kong/custom_nginx.template && ./docker-entrypoint.sh kong docker-start --nginx-conf /home/kong/custom_nginx.template
 ` + kongConfigBuf.String() + `
 EOF
@@ -821,6 +822,7 @@ EOF
 					Timeout:  2 * time.Second,
 					Retries:  3,
 				},
+				Labels: utils.Config.Studio.Labels,
 			},
 			container.HostConfig{
 				PortBindings:  nat.PortMap{"3000/tcp": []nat.PortBinding{{HostPort: strconv.FormatUint(uint64(utils.Config.Studio.Port), 10)}}},
