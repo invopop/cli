@@ -522,6 +522,7 @@ EOF
 					Timeout:  2 * time.Second,
 					Retries:  3,
 				},
+				Labels: utils.Config.Auth.Labels,
 			},
 			start.WithSyslogConfig(container.HostConfig{
 				RestartPolicy: container.RestartPolicy{Name: "always"},
@@ -695,6 +696,7 @@ EOF
 					Timeout:  2 * time.Second,
 					Retries:  3,
 				},
+				Labels: utils.Config.Storage.Labels,
 			},
 			start.WithSyslogConfig(container.HostConfig{
 				RestartPolicy: container.RestartPolicy{Name: "always"},
