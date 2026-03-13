@@ -10,5 +10,3 @@ enable = [
     "goconst", "unparam", "gofmt"
 ]
 
-[issues]
-exclude-use-default = false
