@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/ghodss/yaml"
+	"golang.org/x/term"
 )
 
 // ReadInput reads data from a file path or stdin. If filePath is empty, reads from stdin.
@@ -21,6 +22,9 @@ func ReadInput(filePath string) (json.RawMessage, error) {
 			return nil, fmt.Errorf("reading file %s: %w", filePath, err)
 		}
 	} else {
+		if term.IsTerminal(int(os.Stdin.Fd())) {
+			return nil, fmt.Errorf("no input: use --file/-f or pipe data via stdin")
+		}
 		data, err = io.ReadAll(os.Stdin)
 		if err != nil {
 			return nil, fmt.Errorf("reading stdin: %w", err)

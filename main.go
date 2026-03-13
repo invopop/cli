@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -17,6 +18,9 @@ func main() {
 
 	root := cmd.Root()
 	if err := root.ExecuteContext(ctx); err != nil {
+		if errors.Is(err, context.Canceled) {
+			os.Exit(0)
+		}
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

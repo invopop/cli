@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func siloFilesCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func siloFilesCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	files := &cobra.Command{
 		Use:   "files",
 		Short: "Manage silo entry files",
@@ -22,7 +22,7 @@ func siloFilesCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Com
 	return files
 }
 
-func siloFilesCreateCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func siloFilesCreateCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	var (
 		file     string
 		name     string
@@ -44,7 +44,10 @@ func siloFilesCreateCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cob
 			if name == "" {
 				name = file
 			}
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			f, err := c.Silo().Files().Create(cmd.Context(), &invopop.CreateSiloFile{
 				EntryID:  args[0],
 				Name:     name,
@@ -65,13 +68,16 @@ func siloFilesCreateCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cob
 	return cmd
 }
 
-func siloFilesDownloadCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func siloFilesDownloadCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	return &cobra.Command{
 		Use:   "download <entry-id> <file-id>",
 		Short: "Download a file from a silo entry",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			rc, err := c.Silo().Files().Download(cmd.Context(), args[0], args[1])
 			if err != nil {
 				return err

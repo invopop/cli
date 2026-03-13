@@ -2,6 +2,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/invopop/client.go/invopop"
@@ -11,9 +12,8 @@ import (
 // Root creates and returns the root command with all subcommands.
 func Root() *cobra.Command {
 	var (
-		token  string
-		host   string
-		format string
+		token string
+		host  string
 	)
 
 	root := &cobra.Command{
@@ -25,30 +25,30 @@ func Root() *cobra.Command {
 
 	root.PersistentFlags().StringVarP(&token, "token", "t", "", "API token (or INVOPOP_TOKEN env var)")
 	root.PersistentFlags().StringVar(&host, "host", "", "API host (default: https://api.invopop.com)")
-	root.PersistentFlags().StringVarP(&format, "format", "o", "json", "Output format: json (default), table")
 
 	// Build client lazily so subcommands can access it.
 	// Reads token from flag first, then env var.
-	getClient := func(_ *cobra.Command) *invopop.Client {
+	getClient := func() (*invopop.Client, error) {
 		t := token
 		if t == "" {
 			t = os.Getenv("INVOPOP_TOKEN")
+		}
+		if t == "" {
+			return nil, fmt.Errorf("API token required: set --token flag or INVOPOP_TOKEN environment variable")
 		}
 		var opts []invopop.ClientOption
 		if host != "" {
 			opts = append(opts, invopop.WithConfig(&invopop.Config{BaseURL: host}))
 		}
-		if t != "" {
-			opts = append(opts, invopop.WithAuthToken(t))
-		}
-		return invopop.New(opts...)
+		opts = append(opts, invopop.WithAuthToken(t))
+		return invopop.New(opts...), nil
 	}
 
 	root.AddCommand(pingCmd(getClient))
 	root.AddCommand(workspaceCmd(getClient))
-	root.AddCommand(siloCmd(getClient, &format))
-	root.AddCommand(transformCmd(getClient, &format))
-	root.AddCommand(sequenceCmd(getClient, &format))
+	root.AddCommand(siloCmd(getClient))
+	root.AddCommand(transformCmd(getClient))
+	root.AddCommand(sequenceCmd(getClient))
 	root.AddCommand(skillCmd())
 
 	return root

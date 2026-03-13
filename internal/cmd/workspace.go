@@ -6,12 +6,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func workspaceCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func workspaceCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	return &cobra.Command{
 		Use:   "workspace",
 		Short: "Show current workspace info",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			ws, err := c.Access().Workspace().Fetch(cmd.Context())
 			if err != nil {
 				return err

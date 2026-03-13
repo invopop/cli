@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/invopop/client.go/invopop"
 	iohelper "github.com/invopop/invocli/internal/io"
 	"github.com/spf13/cobra"
 )
 
-func transformJobsCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func transformJobsCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	jobs := &cobra.Command{
 		Use:   "jobs",
 		Short: "Manage transform jobs",
@@ -19,7 +21,7 @@ func transformJobsCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra
 	return jobs
 }
 
-func transformJobsCreateCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func transformJobsCreateCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	var (
 		workflowID  string
 		siloEntryID string
@@ -32,6 +34,13 @@ func transformJobsCreateCmd(getClient func(cmd *cobra.Command) *invopop.Client) 
 		Use:   "create",
 		Short: "Create a transform job",
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			if workflowID == "" {
+				return fmt.Errorf("--workflow-id is required")
+			}
+			if siloEntryID != "" && file != "" {
+				return fmt.Errorf("--silo-entry-id and --file are mutually exclusive")
+			}
+
 			req := &invopop.CreateJob{
 				WorkflowID:  workflowID,
 				SiloEntryID: siloEntryID,
@@ -49,7 +58,10 @@ func transformJobsCreateCmd(getClient func(cmd *cobra.Command) *invopop.Client) 
 				req.Data = data
 			}
 
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			job, err := c.Transform().Jobs().Create(cmd.Context(), req)
 			if err != nil {
 				return err
@@ -66,13 +78,16 @@ func transformJobsCreateCmd(getClient func(cmd *cobra.Command) *invopop.Client) 
 	return cmd
 }
 
-func transformJobsFetchCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func transformJobsFetchCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	return &cobra.Command{
 		Use:   "fetch <id>",
 		Short: "Fetch a job by ID",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			job, err := c.Transform().Jobs().Fetch(cmd.Context(), args[0])
 			if err != nil {
 				return err
@@ -82,13 +97,16 @@ func transformJobsFetchCmd(getClient func(cmd *cobra.Command) *invopop.Client) *
 	}
 }
 
-func transformJobsFetchKeyCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func transformJobsFetchKeyCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	return &cobra.Command{
 		Use:   "fetch-key <key>",
 		Short: "Fetch a job by key",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			job, err := c.Transform().Jobs().FetchByKey(cmd.Context(), args[0])
 			if err != nil {
 				return err

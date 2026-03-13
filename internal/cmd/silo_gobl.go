@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func siloBuildCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func siloBuildCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	var (
 		file    string
 		envelop bool
@@ -19,7 +19,10 @@ func siloBuildCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Com
 			if err != nil {
 				return err
 			}
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			result, err := c.Silo().GOBL().Build(cmd.Context(), &invopop.BuildGOBL{
 				Data:    data,
 				Envelop: envelop,
@@ -35,7 +38,7 @@ func siloBuildCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Com
 	return cmd
 }
 
-func siloSignCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func siloSignCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	var file string
 	cmd := &cobra.Command{
 		Use:   "sign",
@@ -45,7 +48,10 @@ func siloSignCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Comm
 			if err != nil {
 				return err
 			}
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			result, err := c.Silo().GOBL().Sign(cmd.Context(), &invopop.SignGOBL{
 				Data: data,
 			})
@@ -59,13 +65,13 @@ func siloSignCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Comm
 	return cmd
 }
 
-func siloCmd(getClient func(cmd *cobra.Command) *invopop.Client, format *string) *cobra.Command {
+func siloCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	silo := &cobra.Command{
 		Use:   "silo",
-		Short: "Manage silo entries, files, states, and GOBL documents",
+		Short: "Manage silo entries, files, and GOBL documents",
 	}
 
-	silo.AddCommand(siloEntriesCmd(getClient, format))
+	silo.AddCommand(siloEntriesCmd(getClient))
 	silo.AddCommand(siloFilesCmd(getClient))
 	silo.AddCommand(siloBuildCmd(getClient))
 	silo.AddCommand(siloSignCmd(getClient))

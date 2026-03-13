@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func transformWorkflowsCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func transformWorkflowsCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	wf := &cobra.Command{
 		Use:   "workflows",
 		Short: "Manage transform workflows",
@@ -22,7 +22,7 @@ func transformWorkflowsCmd(getClient func(cmd *cobra.Command) *invopop.Client) *
 	return wf
 }
 
-func transformWorkflowsListCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func transformWorkflowsListCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	var (
 		limit  int32
 		schema string
@@ -31,7 +31,10 @@ func transformWorkflowsListCmd(getClient func(cmd *cobra.Command) *invopop.Clien
 		Use:   "list",
 		Short: "List workflows",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			col, err := c.Transform().Workflows().List(cmd.Context(), &invopop.FindWorkflows{
 				Limit:  limit,
 				Schema: schema,
@@ -47,7 +50,7 @@ func transformWorkflowsListCmd(getClient func(cmd *cobra.Command) *invopop.Clien
 	return cmd
 }
 
-func transformWorkflowsCreateCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func transformWorkflowsCreateCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	var file string
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -61,7 +64,10 @@ func transformWorkflowsCreateCmd(getClient func(cmd *cobra.Command) *invopop.Cli
 			if err := json.Unmarshal(data, &req); err != nil {
 				return err
 			}
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			wf, err := c.Transform().Workflows().Create(cmd.Context(), &req)
 			if err != nil {
 				return err
@@ -73,13 +79,16 @@ func transformWorkflowsCreateCmd(getClient func(cmd *cobra.Command) *invopop.Cli
 	return cmd
 }
 
-func transformWorkflowsFetchCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func transformWorkflowsFetchCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	return &cobra.Command{
 		Use:   "fetch <id>",
 		Short: "Fetch a workflow by ID",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			wf, err := c.Transform().Workflows().Fetch(cmd.Context(), args[0])
 			if err != nil {
 				return err
@@ -89,7 +98,7 @@ func transformWorkflowsFetchCmd(getClient func(cmd *cobra.Command) *invopop.Clie
 	}
 }
 
-func transformWorkflowsUpdateCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func transformWorkflowsUpdateCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	var file string
 	cmd := &cobra.Command{
 		Use:   "update <id>",
@@ -105,7 +114,10 @@ func transformWorkflowsUpdateCmd(getClient func(cmd *cobra.Command) *invopop.Cli
 				return err
 			}
 			req.ID = args[0]
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			wf, err := c.Transform().Workflows().Update(cmd.Context(), &req)
 			if err != nil {
 				return err
@@ -117,7 +129,7 @@ func transformWorkflowsUpdateCmd(getClient func(cmd *cobra.Command) *invopop.Cli
 	return cmd
 }
 
-func transformCmd(getClient func(cmd *cobra.Command) *invopop.Client, _ *string) *cobra.Command {
+func transformCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	transform := &cobra.Command{
 		Use:   "transform",
 		Short: "Manage transform jobs and workflows",

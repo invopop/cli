@@ -6,12 +6,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func pingCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func pingCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	return &cobra.Command{
 		Use:   "ping",
 		Short: "Test API connectivity",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			p := &invopop.Ping{}
 			if err := c.Utils().Ping(cmd.Context(), p); err != nil {
 				return err

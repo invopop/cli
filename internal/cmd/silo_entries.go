@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func siloEntriesCmd(getClient func(cmd *cobra.Command) *invopop.Client, _ *string) *cobra.Command {
+func siloEntriesCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	entries := &cobra.Command{
 		Use:   "entries",
 		Short: "Manage silo entries",
@@ -21,7 +21,7 @@ func siloEntriesCmd(getClient func(cmd *cobra.Command) *invopop.Client, _ *strin
 	return entries
 }
 
-func siloEntriesListCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func siloEntriesListCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	var (
 		folder string
 		limit  int32
@@ -31,7 +31,10 @@ func siloEntriesListCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cob
 		Use:   "list",
 		Short: "List silo entries",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			col, err := c.Silo().Entries().List(cmd.Context(), &invopop.FindSiloEntries{
 				Folder: folder,
 				Limit:  limit,
@@ -49,7 +52,7 @@ func siloEntriesListCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cob
 	return cmd
 }
 
-func siloEntriesCreateCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func siloEntriesCreateCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	var (
 		file   string
 		folder string
@@ -63,7 +66,10 @@ func siloEntriesCreateCmd(getClient func(cmd *cobra.Command) *invopop.Client) *c
 			if err != nil {
 				return err
 			}
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			entry, err := c.Silo().Entries().Create(cmd.Context(), &invopop.CreateSiloEntry{
 				Data:   data,
 				Folder: folder,
@@ -81,13 +87,16 @@ func siloEntriesCreateCmd(getClient func(cmd *cobra.Command) *invopop.Client) *c
 	return cmd
 }
 
-func siloEntriesFetchCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func siloEntriesFetchCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	return &cobra.Command{
 		Use:   "fetch <id>",
 		Short: "Fetch a silo entry by ID",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			entry, err := c.Silo().Entries().Fetch(cmd.Context(), args[0])
 			if err != nil {
 				return err
@@ -97,13 +106,16 @@ func siloEntriesFetchCmd(getClient func(cmd *cobra.Command) *invopop.Client) *co
 	}
 }
 
-func siloEntriesFetchKeyCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func siloEntriesFetchKeyCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	return &cobra.Command{
 		Use:   "fetch-key <key>",
 		Short: "Fetch a silo entry by key",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			entry, err := c.Silo().Entries().FetchByKey(cmd.Context(), args[0])
 			if err != nil {
 				return err
@@ -113,7 +125,7 @@ func siloEntriesFetchKeyCmd(getClient func(cmd *cobra.Command) *invopop.Client) 
 	}
 }
 
-func siloEntriesUpdateCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func siloEntriesUpdateCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	var (
 		file   string
 		folder string
@@ -127,7 +139,10 @@ func siloEntriesUpdateCmd(getClient func(cmd *cobra.Command) *invopop.Client) *c
 			if err != nil {
 				return err
 			}
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			entry, err := c.Silo().Entries().Update(cmd.Context(), &invopop.UpdateSiloEntry{
 				ID:     args[0],
 				Data:   data,

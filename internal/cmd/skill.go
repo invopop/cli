@@ -24,14 +24,14 @@ func skillCmd() *cobra.Command {
 func skillInstallCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "install",
-		Short: "Install the invocli skill to ~/.claude/skills/invocli/",
+		Short: "Install the invocli skill to ~/.claude/skills/invopop/",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			home, err := os.UserHomeDir()
 			if err != nil {
 				return fmt.Errorf("finding home directory: %w", err)
 			}
 
-			dir := filepath.Join(home, ".claude", "skills", "invocli")
+			dir := filepath.Join(home, ".claude", "skills", "invopop")
 			if err := os.MkdirAll(dir, 0o755); err != nil {
 				return fmt.Errorf("creating skill directory: %w", err)
 			}

@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func sequenceSeriesCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func sequenceSeriesCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	series := &cobra.Command{
 		Use:   "series",
 		Short: "Manage sequence series",
@@ -21,12 +21,15 @@ func sequenceSeriesCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobr
 	return series
 }
 
-func sequenceSeriesListCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func sequenceSeriesListCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
 		Short: "List all series",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			col, err := c.Sequence().List(cmd.Context())
 			if err != nil {
 				return err
@@ -36,7 +39,7 @@ func sequenceSeriesListCmd(getClient func(cmd *cobra.Command) *invopop.Client) *
 	}
 }
 
-func sequenceSeriesCreateCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func sequenceSeriesCreateCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	var (
 		file    string
 		name    string
@@ -69,7 +72,10 @@ func sequenceSeriesCreateCmd(getClient func(cmd *cobra.Command) *invopop.Client)
 				}
 			}
 
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			s, err := c.Sequence().Create(cmd.Context(), &req)
 			if err != nil {
 				return err
@@ -86,13 +92,16 @@ func sequenceSeriesCreateCmd(getClient func(cmd *cobra.Command) *invopop.Client)
 	return cmd
 }
 
-func sequenceSeriesFetchCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Command {
+func sequenceSeriesFetchCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	return &cobra.Command{
 		Use:   "fetch <id>",
 		Short: "Fetch a series by ID",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := getClient(cmd)
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
 			s, err := c.Sequence().Fetch(cmd.Context(), args[0])
 			if err != nil {
 				return err
