@@ -5,8 +5,10 @@ timeout = "120s"
 
 [linters]
 enable = [
-    "gocyclo", "unconvert", "goimports", "unused",
+    "gocyclo", "unconvert", "unused",
     "govet", "misspell", "nakedret", "errcheck", "revive", "ineffassign",
-    "goconst", "unparam", "gofmt"
+    "goconst", "unparam"
 ]
 
+[formatters]
+enable = ["goimports", "gofmt"]
