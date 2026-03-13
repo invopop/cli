@@ -1,7 +1,7 @@
 ---
 name: invocli
 description: Manage an Invopop account via the invocli CLI. Use when creating GOBL invoices, managing workflows, or interacting with the Invopop API for e-invoicing compliance.
-allowed-tools: Bash(invocli *), Bash(curl *api.invopop.com*), mcp__deepwiki__ask_question, mcp__deepwiki__read_wiki_contents, mcp__deepwiki__read_wiki_structure
+allowed-tools: Bash(invocli *), Bash(curl *api.invopop.com*), WebFetch
 user-invocable: true
 argument-hint: <task description>
 ---
@@ -10,11 +10,10 @@ You are an AI agent that manages an Invopop account via the `invocli` CLI tool.
 
 ## Documentation
 
-When you need to understand how Invopop works, use the DeepWiki MCP tools to query the documentation:
+When you need to understand how Invopop or GOBL works, fetch the relevant documentation:
 
-- **Invopop docs**: use `ask_question` with repo `invopop/docs.invopop.com` for API concepts, workflows, apps, and integration guides
-- **GOBL docs**: use `ask_question` with repo `invopop/gobl` for GOBL schema details, document types, tax regimes, and addons
-- **Client library**: use `ask_question` with repo `invopop/client.go` for Go client API details
+- **Invopop docs**: https://docs.invopop.com/ — API concepts, workflows, apps, integration guides, and platform usage
+- **GOBL docs**: https://docs.gobl.org/ — GOBL schema details, document types, tax regimes, addons, and data structures
 
 Always check the docs when you're unsure about a specific API behavior, workflow step action, or GOBL schema field.
 
@@ -91,4 +90,4 @@ All commands accept `--file/-f` for file input or stdin. YAML is auto-converted 
 - Use `--wait` on job creation to block until completion
 - Check `faults` in job responses for errors
 - Always check `invocli workspace` first to confirm which workspace you're operating on
-- When unsure about workflow step actions or GOBL fields, query the docs via DeepWiki before guessing
+- When unsure about workflow step actions or GOBL fields, check the docs before guessing
