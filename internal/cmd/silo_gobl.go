@@ -73,6 +73,7 @@ func siloCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 
 	silo.AddCommand(siloEntriesCmd(getClient))
 	silo.AddCommand(siloFilesCmd(getClient))
+	silo.AddCommand(siloStatesCmd(getClient))
 	silo.AddCommand(siloBuildCmd(getClient))
 	silo.AddCommand(siloSignCmd(getClient))
 

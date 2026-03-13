@@ -22,7 +22,6 @@ require (
 	github.com/invopop/jsonschema v0.12.0 // indirect
 	github.com/invopop/validation v0.7.0 // indirect
 	github.com/invopop/yaml v0.3.1 // indirect
-	github.com/kr/text v0.2.0 // indirect
 	github.com/magefile/mage v1.15.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
@@ -34,3 +33,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	resty.dev/v3 v3.0.0-beta.3 // indirect
 )
+
+// TODO: Remove once client.go silo-states branch is merged and tagged
+replace github.com/invopop/client.go => /home/aoliviem/workspace/invopop/client.go
