@@ -29,7 +29,7 @@ func Root() *cobra.Command {
 
 	// Build client lazily so subcommands can access it.
 	// Reads token from flag first, then env var.
-	getClient := func(cmd *cobra.Command) *invopop.Client {
+	getClient := func(_ *cobra.Command) *invopop.Client {
 		t := token
 		if t == "" {
 			t = os.Getenv("INVOPOP_TOKEN")

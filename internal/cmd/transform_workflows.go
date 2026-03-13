@@ -117,7 +117,7 @@ func transformWorkflowsUpdateCmd(getClient func(cmd *cobra.Command) *invopop.Cli
 	return cmd
 }
 
-func transformCmd(getClient func(cmd *cobra.Command) *invopop.Client, format *string) *cobra.Command {
+func transformCmd(getClient func(cmd *cobra.Command) *invopop.Client, _ *string) *cobra.Command {
 	transform := &cobra.Command{
 		Use:   "transform",
 		Short: "Manage transform jobs and workflows",

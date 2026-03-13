@@ -25,7 +25,7 @@ func skillInstallCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "install",
 		Short: "Install the invocli skill to ~/.claude/skills/invocli/",
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			home, err := os.UserHomeDir()
 			if err != nil {
 				return fmt.Errorf("finding home directory: %w", err)
@@ -41,8 +41,8 @@ func skillInstallCmd() *cobra.Command {
 				return fmt.Errorf("writing skill file: %w", err)
 			}
 
-			fmt.Fprintf(os.Stdout, "Skill installed to %s\n", path)
-			fmt.Fprintln(os.Stdout, "You can now use /invocli in Claude Code to manage your Invopop account.")
+			_, _ = fmt.Fprintf(os.Stdout, "Skill installed to %s\n", path)
+			_, _ = fmt.Fprintln(os.Stdout, "You can now use /invocli in Claude Code to manage your Invopop account.")
 			return nil
 		},
 	}
@@ -52,7 +52,7 @@ func skillShowCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "show",
 		Short: "Print the skill content to stdout",
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			_, err := os.Stdout.Write(skills.SkillContent)
 			return err
 		},

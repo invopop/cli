@@ -1,14 +1,12 @@
 package cmd
 
 import (
-	"encoding/json"
-
 	"github.com/invopop/client.go/invopop"
 	iohelper "github.com/invopop/invocli/internal/io"
 	"github.com/spf13/cobra"
 )
 
-func siloEntriesCmd(getClient func(cmd *cobra.Command) *invopop.Client, format *string) *cobra.Command {
+func siloEntriesCmd(getClient func(cmd *cobra.Command) *invopop.Client, _ *string) *cobra.Command {
 	entries := &cobra.Command{
 		Use:   "entries",
 		Short: "Manage silo entries",
@@ -67,7 +65,7 @@ func siloEntriesCreateCmd(getClient func(cmd *cobra.Command) *invopop.Client) *c
 			}
 			c := getClient(cmd)
 			entry, err := c.Silo().Entries().Create(cmd.Context(), &invopop.CreateSiloEntry{
-				Data:   json.RawMessage(data),
+				Data:   data,
 				Folder: folder,
 				Key:    key,
 			})
@@ -132,7 +130,7 @@ func siloEntriesUpdateCmd(getClient func(cmd *cobra.Command) *invopop.Client) *c
 			c := getClient(cmd)
 			entry, err := c.Silo().Entries().Update(cmd.Context(), &invopop.UpdateSiloEntry{
 				ID:     args[0],
-				Data:   json.RawMessage(data),
+				Data:   data,
 				Folder: folder,
 			})
 			if err != nil {

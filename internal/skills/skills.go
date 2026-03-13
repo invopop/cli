@@ -3,5 +3,7 @@ package skills
 
 import _ "embed"
 
+// SkillContent contains the embedded AI skill definition.
+//
 //go:embed SKILL.md
 var SkillContent []byte

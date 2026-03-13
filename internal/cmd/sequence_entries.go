@@ -50,7 +50,7 @@ func sequenceEntriesFetchCmd(getClient func(cmd *cobra.Command) *invopop.Client)
 	}
 }
 
-func sequenceCmd(getClient func(cmd *cobra.Command) *invopop.Client, format *string) *cobra.Command {
+func sequenceCmd(getClient func(cmd *cobra.Command) *invopop.Client, _ *string) *cobra.Command {
 	seq := &cobra.Command{
 		Use:   "sequence",
 		Short: "Manage sequences and series",

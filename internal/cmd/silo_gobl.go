@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
-
 	"github.com/invopop/client.go/invopop"
 	iohelper "github.com/invopop/invocli/internal/io"
 	"github.com/spf13/cobra"
@@ -23,7 +21,7 @@ func siloBuildCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Com
 			}
 			c := getClient(cmd)
 			result, err := c.Silo().GOBL().Build(cmd.Context(), &invopop.BuildGOBL{
-				Data:    json.RawMessage(data),
+				Data:    data,
 				Envelop: envelop,
 			})
 			if err != nil {
@@ -49,7 +47,7 @@ func siloSignCmd(getClient func(cmd *cobra.Command) *invopop.Client) *cobra.Comm
 			}
 			c := getClient(cmd)
 			result, err := c.Silo().GOBL().Sign(cmd.Context(), &invopop.SignGOBL{
-				Data: json.RawMessage(data),
+				Data: data,
 			})
 			if err != nil {
 				return err

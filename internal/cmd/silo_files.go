@@ -76,7 +76,7 @@ func siloFilesDownloadCmd(getClient func(cmd *cobra.Command) *invopop.Client) *c
 			if err != nil {
 				return err
 			}
-			defer rc.Close()
+			defer rc.Close() //nolint:errcheck
 			_, err = io.Copy(os.Stdout, rc)
 			return err
 		},
