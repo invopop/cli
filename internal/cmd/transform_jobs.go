@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
-
 	"github.com/invopop/client.go/invopop"
 	iohelper "github.com/invopop/invocli/internal/io"
 	"github.com/spf13/cobra"
@@ -48,7 +46,7 @@ func transformJobsCreateCmd(getClient func(cmd *cobra.Command) *invopop.Client) 
 				if err != nil {
 					return err
 				}
-				req.Data = json.RawMessage(data)
+				req.Data = data
 			}
 
 			c := getClient(cmd)
