@@ -39,6 +39,7 @@ The API host defaults to `https://api.invopop.com`. Override it with `--host` if
 | `invopop silo` | Manage silo entries, files, and GOBL documents. |
 | `invopop transform` | Manage transform workflows and jobs. |
 | `invopop sequence` | Manage sequence series and entries for invoice numbering. |
+| `invopop tui` | Launch the interactive terminal UI for browsing entries, workflows, and jobs. |
 | `invopop skill` | Install the Invopop skill for [Claude Code](https://claude.com/claude-code). |
 
 Run any command with `--help` for full flag and subcommand details.

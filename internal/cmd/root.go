@@ -59,6 +59,7 @@ func Root() *cobra.Command {
 	root.AddCommand(siloCmd(getClient))
 	root.AddCommand(transformCmd(getClient))
 	root.AddCommand(sequenceCmd(getClient))
+	root.AddCommand(tuiCmd(getClient))
 	root.AddCommand(skillCmd())
 
 	return root
