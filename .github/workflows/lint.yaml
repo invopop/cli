@@ -5,10 +5,7 @@ on:
       - v*
     branches:
       - main
-    paths-ignore:
-      - "docs/**"
   pull_request:
-
 jobs:
   lint:
     name: golangci-lint
@@ -16,7 +13,7 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Prepare .netrc
         uses: extractions/netrc@v1
@@ -25,7 +22,10 @@ jobs:
           username: ${{ secrets.GO_MOD_USER }}
           password: ${{ secrets.GO_MOD_PASS }}
 
-      - name: Lint
-        uses: golangci/golangci-lint-action@v2
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
-          version: v1.45
+          go-version-file: "go.mod"
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v8

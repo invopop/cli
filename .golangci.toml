@@ -1,15 +1,14 @@
+version = "2"
+
 [run]
 timeout = "120s"
 
-[output]
-format = "colored-line-number"
-
 [linters]
 enable = [
-    "gocyclo", "unconvert", "goimports", "unused", "varcheck",
-    "vetshadow", "misspell", "nakedret", "errcheck", "revive", "ineffassign",
-    "deadcode", "goconst", "vet", "unparam", "gofmt"
+    "gocyclo", "unconvert", "unused",
+    "govet", "misspell", "nakedret", "errcheck", "revive", "ineffassign",
+    "goconst", "unparam"
 ]
 
-[issues]
-exclude-use-default = false
+[formatters]
+enable = ["goimports", "gofmt"]
