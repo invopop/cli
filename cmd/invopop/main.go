@@ -1,4 +1,4 @@
-// Package main provides the entry point for the invocli command.
+// Package main provides the entry point for the invopop command.
 package main
 
 import (
@@ -9,7 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/invopop/invocli/internal/cmd"
+	"github.com/invopop/cli/internal/cmd"
 )
 
 func main() {

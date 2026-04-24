@@ -1,16 +1,16 @@
-# InvoCLI
+# Invopop CLI
 
-Invoicing Command Line Interface - creating invoices quickly and easier from the command line.
+Invopop Command Line Interface - manage your Invopop account, build GoBL documents, and run workflows from the terminal.
 
 ## Introduction
 
-The objective of InvoCLI is to demonstrate how the GoBL library and Invopop services can be used together to create digital invoices.
+The objective of the Invopop CLI is to demonstrate how the GoBL library and Invopop services can be used together to create digital invoices.
 
 The application takes the provided yaml document and attempts to fill out all the missing details in order to output an official GoBL envelope. These can then be forwarded to Invopop for processing using a pre-defined workflow.
 
 ## How it Works
 
-On one side InvoCLI expects a configuration file with the base information of the supplier (your company) and digital signature private key details. These details are used on all invoices being generated.
+On one side the CLI expects a configuration file with the base information of the supplier (your company) and digital signature private key details. These details are used on all invoices being generated.
 
 On the other, individual source data files in YAML define the basic input to be converted into complete GoBL JSON. The GoBL library automatically calculates taxes and totals, alongside validating that the contents look correct according to the region.
 
@@ -19,23 +19,25 @@ On the other, individual source data files in YAML define the basic input to be 
 Just execute the regular go build command:
 
 ```go
-go build .
+go build ./cmd/invopop
 ```
 
 If you'd like to install the project in your global go bin directory (recommended), a simple `go install` will work:
 
 ```bash
-go install github.com/invopop/invocli
+go install github.com/invopop/cli/cmd/invopop
 ```
+
+This will produce a binary named `invopop`.
 
 ## Configuration
 
-When executing `invocli`, we check for configurations in two locations:
+When executing `invopop`, we check for configurations in two locations:
 
 - `./config/config.yaml`, i.e. the configuration inside the current path.
-- `~/.invocli/config.yaml`, a shared path in your user's home.
+- `~/.invopop/config.yaml`, a shared path in your user's home.
 
-You can use the [sample](https://github.com/invopop/invocli/blob/main/config/config.yaml) to get started, and replace the relevant fields with the data for your environment. By default, `invocli` comes with configuration details for a testing environment.
+You can use the [sample](https://github.com/invopop/cli/blob/main/config/config.yaml) to get started, and replace the relevant fields with the data for your environment. By default, `invopop` comes with configuration details for a testing environment.
 
 Most likely, you'll want to replace the `key` configuration and `api` endpoints.
 
@@ -44,7 +46,7 @@ Most likely, you'll want to replace the `key` configuration and `api` endpoints.
 Generating a new ECDSA keypair is very straightforward. Simply run:
 
 ```bash
-invocli keys generate
+invopop keys generate
 ```
 
 ```
@@ -70,7 +72,7 @@ To generate an API token for your account, you must first log into the [Invopop 
 Execute the binary with the `build` argument and the source YAML file:
 
 ```bash
-invocli build ./data/2021-06-16-invoice.yaml
+invopop build ./data/2021-06-16-invoice.yaml
 ```
 
 If all goes well, a new complete json file will be output into the same directory.

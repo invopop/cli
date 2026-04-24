@@ -9,6 +9,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const banner = `
+    _
+   (_)___ _   ______  ____  ____  ____
+  / / __ \ | / / __ \/ __ \/ __ \/ __ \
+ / / / / / |/ / /_/ / /_/ / /_/ / /_/ /
+/_/_/ /_/|___/\____/ .___/\____/ .___/
+                  /_/         /_/
+`
+
 // Root creates and returns the root command with all subcommands.
 func Root() *cobra.Command {
 	var (
@@ -17,8 +26,9 @@ func Root() *cobra.Command {
 	)
 
 	root := &cobra.Command{
-		Use:           "invocli",
+		Use:           "invopop",
 		Short:         "Invopop CLI - manage your Invopop account",
+		Long:          banner + "\nInvopop CLI - manage your Invopop account from the terminal.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}

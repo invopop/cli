@@ -1,12 +1,12 @@
 ---
-name: invocli
-description: Manage an Invopop account via the invocli CLI. Use when creating GOBL invoices, managing workflows, or interacting with the Invopop API for e-invoicing compliance.
-allowed-tools: Bash(invocli *), Bash(curl *api.invopop.com*), WebFetch
+name: invopop
+description: Manage an Invopop account via the invopop CLI. Use when creating GOBL invoices, managing workflows, or interacting with the Invopop API for e-invoicing compliance.
+allowed-tools: Bash(invopop *), Bash(curl *api.invopop.com*), WebFetch
 user-invocable: true
 argument-hint: <task description>
 ---
 
-You are an AI agent that manages an Invopop account via the `invocli` CLI tool.
+You are an AI agent that manages an Invopop account via the `invopop` CLI tool.
 
 ## Documentation
 
@@ -41,7 +41,7 @@ Invopop is a platform for managing e-invoicing compliance across countries. The 
 The `INVOPOP_TOKEN` environment variable or `--token` flag must be set. Always test with:
 
 ```bash
-invocli ping
+invopop ping
 ```
 
 If auth fails, ask the user to set their token.
@@ -49,45 +49,45 @@ If auth fails, ask the user to set their token.
 ## Command Reference
 
 ```
-invocli ping                                    # Test connectivity
-invocli workspace                               # Show workspace info
+invopop ping                                    # Test connectivity
+invopop workspace                               # Show workspace info
 
 # Silo (document storage)
-invocli silo entries list [--folder X] [--limit N]
-invocli silo entries create [--file/-f path] [--folder X] [--key X]
-invocli silo entries fetch <id>
-invocli silo entries fetch-key <key>
-invocli silo entries update <id> [--file/-f path]
-invocli silo files create <entry-id> --file/-f path [--name X] [--category X]
-invocli silo files download <entry-id> <file-id>
-invocli silo build [--file/-f path] [--envelop]
-invocli silo sign [--file/-f path]
+invopop silo entries list [--folder X] [--limit N]
+invopop silo entries create [--file/-f path] [--folder X] [--key X]
+invopop silo entries fetch <id>
+invopop silo entries fetch-key <key>
+invopop silo entries update <id> [--file/-f path]
+invopop silo files create <entry-id> --file/-f path [--name X] [--category X]
+invopop silo files download <entry-id> <file-id>
+invopop silo build [--file/-f path] [--envelop]
+invopop silo sign [--file/-f path]
 
 # Transform (workflows & jobs)
-invocli transform workflows list [--limit N] [--schema X]
-invocli transform workflows create [--file/-f path]
-invocli transform workflows fetch <id>
-invocli transform workflows update <id> [--file/-f path]
-invocli transform jobs create [--workflow-id X] [--silo-entry-id X | --file/-f path] [--wait N] [--key X]
-invocli transform jobs fetch <id>
-invocli transform jobs fetch-key <key>
+invopop transform workflows list [--limit N] [--schema X]
+invopop transform workflows create [--file/-f path]
+invopop transform workflows fetch <id>
+invopop transform workflows update <id> [--file/-f path]
+invopop transform jobs create [--workflow-id X] [--silo-entry-id X | --file/-f path] [--wait N] [--key X]
+invopop transform jobs fetch <id>
+invopop transform jobs fetch-key <key>
 
 # Sequence (invoice numbering)
-invocli sequence series list
-invocli sequence series create [--name X] [--prefix X] [--padding N] [--start N]
-invocli sequence series fetch <id>
-invocli sequence entries create <series-id>
-invocli sequence entries fetch <series-id> <id>
+invopop sequence series list
+invopop sequence series create [--name X] [--prefix X] [--padding N] [--start N]
+invopop sequence series fetch <id>
+invopop sequence entries create <series-id>
+invopop sequence entries fetch <series-id> <id>
 ```
 
 All commands accept `--file/-f` for file input or stdin. YAML is auto-converted to JSON. Output is always JSON.
 
 ## Best Practices
 
-- Validate documents with `invocli silo build` before submitting to workflows
+- Validate documents with `invopop silo build` before submitting to workflows
 - Use `--envelop` with `silo build` to wrap raw GOBL documents into envelopes
 - Use `--key` on entries and jobs for idempotency
 - Use `--wait` on job creation to block until completion
 - Check `faults` in job responses for errors
-- Always check `invocli workspace` first to confirm which workspace you're operating on
+- Always check `invopop workspace` first to confirm which workspace you're operating on
 - When unsure about workflow step actions or GOBL fields, check the docs before guessing

@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/invopop/client.go/invopop"
-	iohelper "github.com/invopop/invocli/internal/io"
+	iohelper "github.com/invopop/cli/internal/io"
 	"github.com/spf13/cobra"
 )
 
