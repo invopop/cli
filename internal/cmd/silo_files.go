@@ -5,8 +5,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/invopop/client.go/invopop"
 	iohelper "github.com/invopop/cli/internal/io"
+	"github.com/invopop/client.go/invopop"
 	"github.com/spf13/cobra"
 )
 
