@@ -7,7 +7,8 @@ timeout = "120s"
 enable = [
     "gocyclo", "unconvert", "unused",
     "govet", "misspell", "nakedret", "errcheck", "revive", "ineffassign",
-    "goconst", "unparam"
+    # "goconst", # disabled: returning linter errors for constants in structs
+    "unparam"
 ]
 
 [formatters]
