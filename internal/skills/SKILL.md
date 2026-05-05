@@ -68,6 +68,7 @@ invocli transform workflows list [--limit N] [--schema X]
 invocli transform workflows create [--file/-f path]
 invocli transform workflows fetch <id>
 invocli transform workflows update <id> [--file/-f path]
+invocli transform jobs list [--created-at RFC3339] [--limit N] [--cursor X]
 invocli transform jobs create [--workflow-id X] [--silo-entry-id X | --file/-f path] [--wait N] [--key X]
 invocli transform jobs fetch <id>
 invocli transform jobs fetch-key <key>
