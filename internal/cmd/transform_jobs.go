@@ -61,6 +61,7 @@ func transformJobsCreateCmd(getClient func() (*invopop.Client, error)) *cobra.Co
 		key         string
 		wait        int32
 		tags        []string
+		args        map[string]string
 	)
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -78,6 +79,7 @@ func transformJobsCreateCmd(getClient func() (*invopop.Client, error)) *cobra.Co
 				SiloEntryID: siloEntryID,
 				Key:         key,
 				Tags:        tags,
+				Args:        args,
 				Wait:        wait,
 			}
 
@@ -107,6 +109,7 @@ func transformJobsCreateCmd(getClient func() (*invopop.Client, error)) *cobra.Co
 	cmd.Flags().StringVar(&key, "key", "", "Idempotency key")
 	cmd.Flags().Int32Var(&wait, "wait", 0, "Seconds to wait for job completion")
 	cmd.Flags().StringSliceVar(&tags, "tags", nil, "Tags for the job")
+	cmd.Flags().StringToStringVar(&args, "args", nil, "Additional arguments as key=value pairs")
 	return cmd
 }
 
