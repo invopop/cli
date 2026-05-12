@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/ghodss/yaml v1.0.0
-	github.com/invopop/client.go v0.59.1-0.20260505124852-bf91071282df
+	github.com/invopop/client.go v0.62.0
 	github.com/spf13/cobra v1.9.1
 	golang.org/x/term v0.39.0
 )
