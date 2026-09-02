@@ -24,21 +24,17 @@ func Root() *cobra.Command {
 	}
 
 	root.PersistentFlags().StringVarP(&token, "token", "t", "", "API token (or INVOPOP_TOKEN env var)")
-	root.PersistentFlags().StringVar(&host, "host", "", "API host (default: https://api.invopop.com)")
+	root.PersistentFlags().StringVar(&host, "host", "", "API host (or INVOPOP_HOST env var, default: https://api.invopop.com)")
 
 	// Build client lazily so subcommands can access it.
-	// Reads token from flag first, then env var.
 	getClient := func() (*invopop.Client, error) {
-		t := token
-		if t == "" {
-			t = os.Getenv("INVOPOP_TOKEN")
-		}
+		t := flagOrEnv(token, "INVOPOP_TOKEN")
 		if t == "" {
 			return nil, fmt.Errorf("API token required: set --token flag or INVOPOP_TOKEN environment variable")
 		}
 		var opts []invopop.ClientOption
-		if host != "" {
-			opts = append(opts, invopop.WithConfig(&invopop.Config{BaseURL: host}))
+		if h := flagOrEnv(host, "INVOPOP_HOST"); h != "" {
+			opts = append(opts, invopop.WithConfig(&invopop.Config{BaseURL: h}))
 		}
 		opts = append(opts, invopop.WithAuthToken(t))
 		return invopop.New(opts...), nil
@@ -52,4 +48,12 @@ func Root() *cobra.Command {
 	root.AddCommand(skillCmd())
 
 	return root
+}
+
+// flagOrEnv returns the flag value, falling back to the named env var.
+func flagOrEnv(flag, env string) string {
+	if flag != "" {
+		return flag
+	}
+	return os.Getenv(env)
 }

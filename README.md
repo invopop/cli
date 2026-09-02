@@ -63,6 +63,9 @@ There are two API hosts currently in use:
 - `https://api.invopop.dev` - exclusively for local development.
 - `https://api.invopop.com` - production usage.
 
+Set the host with `--host` or the `INVOPOP_HOST` environment variable; it defaults to
+production. A token is only valid on the environment that issued it.
+
 To generate an API token for your account, you must first log into the [Invopop Console](https://console.invopop.com). In the "Settings" section, you can access "Tokens" and click "New Token" to follow the steps to generate a new code. We use JSON Web Tokens for authentication, if you're interested, you can check the contents at [jwt.io](https://jwt.io/).
 
 ## Running
