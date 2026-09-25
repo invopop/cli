@@ -38,7 +38,9 @@ Invopop is a platform for managing e-invoicing compliance across countries. The 
 
 ## Authentication
 
-The `INVOPOP_TOKEN` environment variable or `--token` flag must be set. Always test with:
+The `INVOPOP_TOKEN` environment variable or `--token` flag must be set. The API host
+defaults to `https://api.invopop.com`; set `INVOPOP_HOST` or `--host` to target another
+environment, as tokens are only valid on the environment that issued them. Always test with:
 
 ```bash
 invocli ping
