@@ -34,8 +34,9 @@ is needed, and an agent driving the CLI can reach only what you can.
 
 ```bash
 invopop auth status              # who you are and which workspace is in use
-invopop auth workspace           # list your workspaces
-invopop auth workspace my-shop   # switch to another
+invopop auth workspace           # choose another workspace
+invopop auth workspace my-shop   # switch to it directly
+invopop auth workspace --list    # list them as JSON
 invopop auth token               # print a workspace token for curl etc.
 invopop auth logout
 ```

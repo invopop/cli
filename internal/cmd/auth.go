@@ -148,10 +148,15 @@ func authStatusCmd(getSession func() (*auth.Session, error)) *cobra.Command {
 }
 
 func authWorkspaceCmd(getSession func() (*auth.Session, error)) *cobra.Command {
-	return &cobra.Command{
+	var list bool
+	cmd := &cobra.Command{
 		Use:   "workspace [id-or-slug]",
-		Short: "List your workspaces, or switch to another",
-		Args:  cobra.MaximumNArgs(1),
+		Short: "Switch to another workspace, or list them",
+		Long: `Switch to another workspace, or list them.
+
+With an ID or slug, switches to it. Without one, asks which to use at a
+terminal, and prints your workspaces as JSON otherwise or with --list.`,
+		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s, err := getSession()
 			if err != nil {
@@ -161,14 +166,18 @@ func authWorkspaceCmd(getSession func() (*auth.Session, error)) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if len(args) == 0 {
+			want := ""
+			if len(args) > 0 {
+				want = args[0]
+			} else if list || !term.IsTerminal(int(os.Stdin.Fd())) {
+				// Agents and pipes get data rather than a prompt.
 				orgs, err := s.Orgs(cmd.Context(), c)
 				if err != nil {
 					return err
 				}
 				return iohelper.PrintJSON(orgs)
 			}
-			ws, err := chooseWorkspace(cmd, nil, s, c, args[0])
+			ws, err := chooseWorkspace(cmd, nil, s, c, want)
 			if err != nil {
 				return err
 			}
@@ -179,6 +188,8 @@ func authWorkspaceCmd(getSession func() (*auth.Session, error)) *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().BoolVar(&list, "list", false, "print your workspaces as JSON instead of choosing")
+	return cmd
 }
 
 func authTokenCmd(getSession func() (*auth.Session, error)) *cobra.Command {
@@ -218,6 +229,9 @@ func chooseWorkspace(cmd *cobra.Command, in *bufio.Reader, s *auth.Session, c *a
 			labels[w] = fmt.Sprintf("%s / %s", o.Name, w.Name)
 			if w.Sandbox {
 				labels[w] += " (sandbox)"
+			}
+			if w.ID == c.WorkspaceID {
+				labels[w] += "  ← current"
 			}
 		}
 	}

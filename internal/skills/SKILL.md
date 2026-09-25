@@ -57,7 +57,7 @@ the token renews itself.
 
 - `invopop auth status` shows the signed-in user and the current workspace.
   Check it before making changes so you act in the workspace the user means.
-- `invopop auth workspace` lists the user's workspaces; switch only when the
+- `invopop auth workspace --list` lists the user's workspaces; switch only when the
   user asks, with `invopop auth workspace <id-or-slug>`.
 - `invopop auth token` prints a short-lived workspace token for use with curl.
 
@@ -69,7 +69,7 @@ them; do not look for another way round it.
 ```
 invopop auth login [--workspace X]              # User signs in (interactive, browser)
 invopop auth status                             # Signed-in user and workspace
-invopop auth workspace [id-or-slug]             # List workspaces, or switch
+invopop auth workspace [id-or-slug] [--list]    # Switch workspace, or list them
 invopop auth token                              # Print a workspace token
 invopop ping                                    # Test connectivity
 invopop workspace                               # Show workspace info
