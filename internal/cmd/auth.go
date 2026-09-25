@@ -151,11 +151,11 @@ func authWorkspaceCmd(getSession func() (*auth.Session, error)) *cobra.Command {
 	var list bool
 	cmd := &cobra.Command{
 		Use:   "workspace [id-or-slug]",
-		Short: "Switch to another workspace, or list them",
-		Long: `Switch to another workspace, or list them.
+		Short: "Choose another workspace to work in",
+		Long: `Choose another workspace to work in.
 
-With an ID or slug, switches to it. Without one, asks which to use at a
-terminal, and prints your workspaces as JSON otherwise or with --list.`,
+Shows a picker, or switches straight to the ID or slug given. Use --list to
+print your workspaces as JSON instead, e.g. for scripts or agents.`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s, err := getSession()
@@ -169,8 +169,7 @@ terminal, and prints your workspaces as JSON otherwise or with --list.`,
 			want := ""
 			if len(args) > 0 {
 				want = args[0]
-			} else if list || !term.IsTerminal(int(os.Stdin.Fd())) {
-				// Agents and pipes get data rather than a prompt.
+			} else if list {
 				orgs, err := s.Orgs(cmd.Context(), c)
 				if err != nil {
 					return err
@@ -264,7 +263,7 @@ func chooseWorkspace(cmd *cobra.Command, in *bufio.Reader, s *auth.Session, c *a
 	case len(all) == 1:
 		return all[0], nil
 	case !term.IsTerminal(int(os.Stdin.Fd())):
-		return nil, errors.New("several workspaces available: pick one with --workspace, or run `invopop auth workspace <id-or-slug>`")
+		return nil, errors.New("several workspaces available and no terminal to choose in: pass an ID or slug, or list them with `invopop auth workspace --list`")
 	}
 
 	cmd.PrintErrln("\nChoose a workspace:")
