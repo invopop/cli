@@ -55,7 +55,9 @@ export INVOPOP_TOKEN=eyJhbGciOi...
 invopop ping
 ```
 
-The API host defaults to `https://api.invopop.com`. Override it with `--host` if needed.
+The API host defaults to `https://api.invopop.com`. Set `--host` or the `INVOPOP_HOST`
+environment variable for another environment, e.g. `https://api.invopop.dev` for local
+development; tokens and sign-ins only work on the environment that issued them.
 
 ## Commands
 

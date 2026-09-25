@@ -49,15 +49,12 @@ func Root() *cobra.Command {
 	}
 
 	root.PersistentFlags().StringVarP(&token, "token", "t", "", "API token (or INVOPOP_TOKEN env var); overrides `invopop auth login`")
-	root.PersistentFlags().StringVar(&host, "host", "", "API host (default: https://api.invopop.com)")
+	root.PersistentFlags().StringVar(&host, "host", "", "API host (or INVOPOP_HOST env var, default: https://api.invopop.com)")
 	root.PersistentFlags().StringVar(&accessHost, "access-host", "", "access service host for sign-in (or INVOPOP_ACCESS_HOST; default derived from --host)")
 	root.PersistentFlags().StringVar(&clientID, "client-id", "", "OAuth client ID for sign-in (or INVOPOP_CLIENT_ID)")
 
 	apiHost := func() string {
-		if host != "" {
-			return host
-		}
-		return defaultAPIHost
+		return firstNonEmpty(flagOrEnv(host, "INVOPOP_HOST"), defaultAPIHost)
 	}
 
 	getSession := func() (*auth.Session, error) {
@@ -68,8 +65,8 @@ func Root() *cobra.Command {
 		h := apiHost()
 		ep := &auth.Endpoints{
 			APIHost:    h,
-			AccessHost: firstNonEmpty(accessHost, os.Getenv("INVOPOP_ACCESS_HOST"), auth.AccessHostFor(h)),
-			ClientID:   firstNonEmpty(clientID, os.Getenv("INVOPOP_CLIENT_ID"), clientIDs[h]),
+			AccessHost: firstNonEmpty(flagOrEnv(accessHost, "INVOPOP_ACCESS_HOST"), auth.AccessHostFor(h)),
+			ClientID:   firstNonEmpty(flagOrEnv(clientID, "INVOPOP_CLIENT_ID"), clientIDs[h]),
 		}
 		return &auth.Session{Store: store, Endpoints: ep}, nil
 	}
@@ -78,7 +75,7 @@ func Root() *cobra.Command {
 	// (flag, then env var) wins; otherwise use the workspace token from a
 	// stored `invopop auth login`, renewing it as needed.
 	getClient := func() (*invopop.Client, error) {
-		t := firstNonEmpty(token, os.Getenv("INVOPOP_TOKEN"))
+		t := flagOrEnv(token, "INVOPOP_TOKEN")
 		if t == "" {
 			s, err := getSession()
 			if err != nil {
@@ -88,12 +85,12 @@ func Root() *cobra.Command {
 				return nil, err
 			}
 		}
-		var opts []invopop.ClientOption
-		if host != "" {
-			opts = append(opts, invopop.WithConfig(&invopop.Config{BaseURL: host}))
-		}
-		opts = append(opts, invopop.WithAuthToken(t))
-		return invopop.New(opts...), nil
+		// Same host as the session, so a sign-in is always used where it
+		// was issued.
+		return invopop.New(
+			invopop.WithConfig(&invopop.Config{BaseURL: apiHost()}),
+			invopop.WithAuthToken(t),
+		), nil
 	}
 
 	root.AddCommand(pingCmd(getClient))
@@ -114,4 +111,12 @@ func firstNonEmpty(vals ...string) string {
 		}
 	}
 	return ""
+}
+
+// flagOrEnv returns the flag value, falling back to the named env var.
+func flagOrEnv(flag, env string) string {
+	if flag != "" {
+		return flag
+	}
+	return os.Getenv(env)
 }

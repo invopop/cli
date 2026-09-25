@@ -39,7 +39,10 @@ Invopop is a platform for managing e-invoicing compliance across countries. The 
 ## Authentication
 
 The CLI acts either as the user, through a stored sign-in, or through an API
-key in `INVOPOP_TOKEN` / `--token`. Always test first with:
+key in `INVOPOP_TOKEN` / `--token`. The API host defaults to
+`https://api.invopop.com`; `INVOPOP_HOST` or `--host` selects another
+environment, and a sign-in or token only works where it was issued. Always
+test first with:
 
 ```bash
 invopop ping
@@ -87,7 +90,8 @@ invopop transform workflows list [--limit N] [--schema X]
 invopop transform workflows create [--file/-f path]
 invopop transform workflows fetch <id>
 invopop transform workflows update <id> [--file/-f path]
-invopop transform jobs create [--workflow-id X] [--silo-entry-id X | --file/-f path] [--wait N] [--key X]
+invopop transform jobs list [--created-at RFC3339] [--limit N] [--cursor X]
+invopop transform jobs create [--workflow-id X] [--silo-entry-id X | --file/-f path] [--wait N] [--key X] [--tags a,b] [--args k=v]
 invopop transform jobs fetch <id>
 invopop transform jobs fetch-key <key>
 

@@ -14,11 +14,43 @@ func transformJobsCmd(getClient func() (*invopop.Client, error)) *cobra.Command 
 		Short: "Manage transform jobs",
 	}
 
+	jobs.AddCommand(transformJobsListCmd(getClient))
 	jobs.AddCommand(transformJobsCreateCmd(getClient))
 	jobs.AddCommand(transformJobsFetchCmd(getClient))
 	jobs.AddCommand(transformJobsFetchKeyCmd(getClient))
 
 	return jobs
+}
+
+func transformJobsListCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
+	var (
+		createdAt string
+		limit     int32
+		cursor    string
+	)
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "List transform jobs",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			c, err := getClient()
+			if err != nil {
+				return err
+			}
+			col, err := c.Transform().Jobs().List(cmd.Context(), &invopop.FindJobs{
+				CreatedAt: createdAt,
+				Limit:     limit,
+				Cursor:    cursor,
+			})
+			if err != nil {
+				return err
+			}
+			return iohelper.PrintJSON(col)
+		},
+	}
+	cmd.Flags().StringVar(&createdAt, "created-at", "", "Date from which results are returned in descending order (RFC3339)")
+	cmd.Flags().Int32Var(&limit, "limit", 0, "Maximum number of results (up to 100)")
+	cmd.Flags().StringVar(&cursor, "cursor", "", "Pagination cursor")
+	return cmd
 }
 
 func transformJobsCreateCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
@@ -29,6 +61,7 @@ func transformJobsCreateCmd(getClient func() (*invopop.Client, error)) *cobra.Co
 		key         string
 		wait        int32
 		tags        []string
+		args        map[string]string
 	)
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -46,6 +79,7 @@ func transformJobsCreateCmd(getClient func() (*invopop.Client, error)) *cobra.Co
 				SiloEntryID: siloEntryID,
 				Key:         key,
 				Tags:        tags,
+				Args:        args,
 				Wait:        wait,
 			}
 
@@ -75,6 +109,7 @@ func transformJobsCreateCmd(getClient func() (*invopop.Client, error)) *cobra.Co
 	cmd.Flags().StringVar(&key, "key", "", "Idempotency key")
 	cmd.Flags().Int32Var(&wait, "wait", 0, "Seconds to wait for job completion")
 	cmd.Flags().StringSliceVar(&tags, "tags", nil, "Tags for the job")
+	cmd.Flags().StringToStringVar(&args, "args", nil, "Additional arguments as key=value pairs")
 	return cmd
 }
 
