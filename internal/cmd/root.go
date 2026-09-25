@@ -2,12 +2,24 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
+	"github.com/invopop/cli/internal/auth"
 	"github.com/invopop/client.go/invopop"
 	"github.com/spf13/cobra"
 )
+
+const defaultAPIHost = "https://api.invopop.com"
+
+// clientIDs holds the public OAuth client ID registered for the CLI in each
+// environment, keyed by API host. A client ID is not a secret, so it ships in
+// the binary; --client-id or INVOPOP_CLIENT_ID override it.
+var clientIDs = map[string]string{
+	// TODO: fill in once the CLI's public OAuth apps are registered, each
+	// with the redirect URL http://127.0.0.1/callback.
+	// "https://api.invopop.com": "",
+	// "https://api.invopop.dev": "",
+}
 
 const banner = `
     _
@@ -21,8 +33,10 @@ const banner = `
 // Root creates and returns the root command with all subcommands.
 func Root() *cobra.Command {
 	var (
-		token string
-		host  string
+		token      string
+		host       string
+		accessHost string
+		clientID   string
 	)
 
 	root := &cobra.Command{
@@ -33,18 +47,45 @@ func Root() *cobra.Command {
 		SilenceErrors: true,
 	}
 
-	root.PersistentFlags().StringVarP(&token, "token", "t", "", "API token (or INVOPOP_TOKEN env var)")
+	root.PersistentFlags().StringVarP(&token, "token", "t", "", "API token (or INVOPOP_TOKEN env var); overrides `invopop auth login`")
 	root.PersistentFlags().StringVar(&host, "host", "", "API host (default: https://api.invopop.com)")
+	root.PersistentFlags().StringVar(&accessHost, "access-host", "", "access service host for sign-in (or INVOPOP_ACCESS_HOST; default derived from --host)")
+	root.PersistentFlags().StringVar(&clientID, "client-id", "", "OAuth client ID for sign-in (or INVOPOP_CLIENT_ID)")
 
-	// Build client lazily so subcommands can access it.
-	// Reads token from flag first, then env var.
-	getClient := func() (*invopop.Client, error) {
-		t := token
-		if t == "" {
-			t = os.Getenv("INVOPOP_TOKEN")
+	apiHost := func() string {
+		if host != "" {
+			return host
 		}
+		return defaultAPIHost
+	}
+
+	getSession := func() (*auth.Session, error) {
+		store, err := auth.DefaultStore()
+		if err != nil {
+			return nil, err
+		}
+		h := apiHost()
+		ep := &auth.Endpoints{
+			APIHost:    h,
+			AccessHost: firstNonEmpty(accessHost, os.Getenv("INVOPOP_ACCESS_HOST"), auth.AccessHostFor(h)),
+			ClientID:   firstNonEmpty(clientID, os.Getenv("INVOPOP_CLIENT_ID"), clientIDs[h]),
+		}
+		return &auth.Session{Store: store, Endpoints: ep}, nil
+	}
+
+	// Build client lazily so subcommands can access it. An explicit token
+	// (flag, then env var) wins; otherwise use the workspace token from a
+	// stored `invopop auth login`, renewing it as needed.
+	getClient := func() (*invopop.Client, error) {
+		t := firstNonEmpty(token, os.Getenv("INVOPOP_TOKEN"))
 		if t == "" {
-			return nil, fmt.Errorf("API token required: set --token flag or INVOPOP_TOKEN environment variable")
+			s, err := getSession()
+			if err != nil {
+				return nil, err
+			}
+			if t, err = s.WorkspaceToken(root.Context()); err != nil {
+				return nil, err
+			}
 		}
 		var opts []invopop.ClientOption
 		if host != "" {
@@ -60,6 +101,16 @@ func Root() *cobra.Command {
 	root.AddCommand(transformCmd(getClient))
 	root.AddCommand(sequenceCmd(getClient))
 	root.AddCommand(skillCmd())
+	root.AddCommand(authCmd(getSession))
 
 	return root
+}
+
+func firstNonEmpty(vals ...string) string {
+	for _, v := range vals {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
 }

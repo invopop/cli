@@ -18,10 +18,35 @@ This produces a binary called `invopop` in your `$GOBIN`.
 
 ## Authentication
 
-The CLI authenticates against the Invopop API using a token. Generate one from the [Invopop Console](https://console.invopop.com) under **Settings → Tokens**, then expose it to the CLI via either:
+### Sign in with your account (recommended)
 
-- the `INVOPOP_TOKEN` environment variable, or
-- the `--token` / `-t` flag.
+```bash
+invopop auth login
+```
+
+This opens your browser to sign in to Invopop, then asks which workspace to
+work in (or pass `--workspace <id-or-slug>`). From then on, commands use a
+short-lived token that is restricted to that workspace and carries no more
+than your own permissions there. The CLI renews it on its own, so no API key
+is needed, and an agent driving the CLI can reach only what you can.
+
+```bash
+invopop auth status              # who you are and which workspace is in use
+invopop auth workspace           # list your workspaces
+invopop auth workspace my-shop   # switch to another
+invopop auth token               # print a workspace token for curl etc.
+invopop auth logout
+```
+
+Sign-ins are stored per API host in your config directory (e.g.
+`~/.config/invopop/credentials.json`), readable only by you.
+
+### API keys
+
+Alternatively, generate a token from the [Invopop Console](https://console.invopop.com)
+under **Settings → Tokens** and pass it via the `INVOPOP_TOKEN` environment
+variable or the `--token` / `-t` flag. An explicit token always takes
+precedence over a stored sign-in.
 
 ```bash
 export INVOPOP_TOKEN=eyJhbGciOi...
@@ -34,6 +59,7 @@ The API host defaults to `https://api.invopop.com`. Override it with `--host` if
 
 | Command | Description |
 |---|---|
+| `invopop auth` | Sign in with your account and choose a workspace. |
 | `invopop ping` | Test API connectivity. |
 | `invopop workspace` | Show details of the current workspace. |
 | `invopop silo` | Manage silo entries, files, and GOBL documents. |
