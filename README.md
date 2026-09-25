@@ -24,8 +24,10 @@ This produces a binary called `invopop` in your `$GOBIN`.
 invopop auth login
 ```
 
-This opens your browser to sign in to Invopop, then asks which workspace to
-work in (or pass `--workspace <id-or-slug>`). From then on, commands use a
+This opens your browser to sign in to Invopop and asks you to paste back the
+code shown there, which works over SSH or from a container too (use
+`--no-browser` to just print the link). It then asks which workspace to work
+in, or pass `--workspace <id-or-slug>`. From then on, commands use a
 short-lived token that is restricted to that workspace and carries no more
 than your own permissions there. The CLI renews it on its own, so no API key
 is needed, and an agent driving the CLI can reach only what you can.

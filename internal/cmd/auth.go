@@ -27,8 +27,8 @@ func authCmd(getSession func() (*auth.Session, error)) *cobra.Command {
 		Short: "Sign in with your Invopop account instead of an API key",
 		Long: `Sign in with your Invopop account instead of an API key.
 
-"invopop auth login" opens your browser to sign in, then asks which workspace
-to work in. Commands afterwards use a short-lived token restricted to that
+"invopop auth login" opens your browser to sign in and asks you to paste back
+the code it shows, then which workspace to work in. Commands afterwards use a short-lived token restricted to that
 workspace, carrying no more than your own permissions there, and renew it
 automatically. An explicit --token or INVOPOP_TOKEN still takes precedence.`,
 	}
@@ -54,9 +54,15 @@ func authLoginCmd(getSession func() (*auth.Session, error)) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			// One reader for both prompts, so neither swallows the other's input.
+			in := bufio.NewReader(cmd.InOrStdin())
 			opts := &auth.LoginOptions{
 				Scope:  scope,
 				Notify: func(msg string) { cmd.PrintErrln(msg) },
+				ReadCode: func() (string, error) {
+					cmd.PrintErr("Paste the code shown in your browser: ")
+					return in.ReadString('\n')
+				},
 			}
 			if !noBrowser {
 				opts.OpenBrowser = openBrowser
@@ -70,7 +76,7 @@ func authLoginCmd(getSession func() (*auth.Session, error)) *cobra.Command {
 			}
 			cmd.PrintErrf("Signed in as %s.\n", c.Email)
 
-			ws, err := chooseWorkspace(cmd, s, c, workspace)
+			ws, err := chooseWorkspace(cmd, in, s, c, workspace)
 			if err != nil {
 				return err
 			}
@@ -83,7 +89,7 @@ func authLoginCmd(getSession func() (*auth.Session, error)) *cobra.Command {
 	}
 	cmd.Flags().StringVarP(&workspace, "workspace", "w", "", "workspace ID or slug to use after signing in")
 	cmd.Flags().StringVar(&scope, "scope", defaultScope, "OAuth scopes to request")
-	cmd.Flags().BoolVar(&noBrowser, "no-browser", false, "print the sign-in URL instead of opening a browser")
+	cmd.Flags().BoolVar(&noBrowser, "no-browser", false, "only print the sign-in URL, e.g. over SSH")
 	return cmd
 }
 
@@ -162,7 +168,7 @@ func authWorkspaceCmd(getSession func() (*auth.Session, error)) *cobra.Command {
 				}
 				return iohelper.PrintJSON(orgs)
 			}
-			ws, err := chooseWorkspace(cmd, s, c, args[0])
+			ws, err := chooseWorkspace(cmd, nil, s, c, args[0])
 			if err != nil {
 				return err
 			}
@@ -199,7 +205,7 @@ minutes; run this again for a fresh one.`,
 
 // chooseWorkspace picks the workspace matching want (an ID or slug). With no
 // preference it takes the only workspace there is, or asks at a terminal.
-func chooseWorkspace(cmd *cobra.Command, s *auth.Session, c *auth.Credentials, want string) (*auth.Workspace, error) {
+func chooseWorkspace(cmd *cobra.Command, in *bufio.Reader, s *auth.Session, c *auth.Credentials, want string) (*auth.Workspace, error) {
 	orgs, err := s.Orgs(cmd.Context(), c)
 	if err != nil {
 		return nil, err
@@ -236,10 +242,12 @@ func chooseWorkspace(cmd *cobra.Command, s *auth.Session, c *auth.Credentials, w
 	for i, w := range all {
 		cmd.PrintErrf("  %2d) %s  [%s]\n", i+1, labels[w], w.Slug)
 	}
-	r := bufio.NewReader(cmd.InOrStdin())
+	if in == nil {
+		in = bufio.NewReader(cmd.InOrStdin())
+	}
 	for {
 		cmd.PrintErr("Number: ")
-		line, err := r.ReadString('\n')
+		line, err := in.ReadString('\n')
 		if err != nil {
 			return nil, fmt.Errorf("reading choice: %w", err)
 		}

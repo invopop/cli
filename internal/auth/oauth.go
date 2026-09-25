@@ -3,8 +3,8 @@
 //
 // The CLI is a public OAuth client: it ships to anyone, so it cannot keep a
 // client secret. The user signs in through the browser using the
-// authorization code flow with PKCE (S256) and a loopback redirect, following
-// RFC 8252. The resulting user token reaches every workspace the user belongs
+// authorization code flow with PKCE (S256), then pastes the code access shows
+// them back into the CLI. The resulting user token reaches every workspace the user belongs
 // to, so it is only ever exchanged for a workspace token restricted to the
 // workspace they chose, and narrowed to what they may do there. That
 // workspace token is what API calls carry.
@@ -15,7 +15,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -87,6 +86,11 @@ type oauthToken struct {
 	} `json:"info"`
 }
 
+// redirectOOB tells access to show the code on screen instead of redirecting,
+// so login works wherever the browser is, including over SSH or from a
+// container. The CLI's OAuth app must be registered with it.
+const redirectOOB = "urn:ietf:wg:oauth:2.0:oob"
+
 // LoginOptions tune an interactive login.
 type LoginOptions struct {
 	// Scope requested from the user. The access service narrows it to what
@@ -98,8 +102,8 @@ type LoginOptions struct {
 	OpenBrowser func(url string) error
 	// Notify receives messages for the person at the terminal.
 	Notify func(msg string)
-	// Timeout bounds how long to wait for the browser to come back.
-	Timeout time.Duration
+	// ReadCode returns the code the user pastes from the browser.
+	ReadCode func() (string, error)
 }
 
 // Login runs the browser sign-in and returns credentials holding the user's
@@ -108,44 +112,20 @@ func Login(ctx context.Context, ep *Endpoints, opts *LoginOptions) (*Credentials
 	if err := ep.validate(); err != nil {
 		return nil, err
 	}
-	if opts == nil {
-		opts = new(LoginOptions)
+	if opts == nil || opts.ReadCode == nil {
+		return nil, errors.New("login needs a way to read the code")
 	}
 	notify := opts.Notify
 	if notify == nil {
 		notify = func(string) {}
-	}
-	timeout := opts.Timeout
-	if timeout == 0 {
-		timeout = 5 * time.Minute
 	}
 
 	pk, err := newPKCE()
 	if err != nil {
 		return nil, err
 	}
-	state, err := randomString(16)
-	if err != nil {
-		return nil, err
-	}
 
-	// Listen on the IPv4 loopback literal rather than "localhost", as RFC
-	// 8252 advises, on whatever port the system hands us.
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		return nil, fmt.Errorf("starting local callback listener: %w", err)
-	}
-	redirectURI := fmt.Sprintf("http://127.0.0.1:%d/callback", ln.Addr().(*net.TCPAddr).Port)
-
-	results := make(chan callbackResult, 1)
-	srv := &http.Server{
-		Handler:           callbackHandler(state, results),
-		ReadHeaderTimeout: 10 * time.Second,
-	}
-	go func() { _ = srv.Serve(ln) }()
-	defer srv.Close() //nolint:errcheck
-
-	authURL := authorizeURL(ep, redirectURI, state, pk.Challenge, opts.Scope)
+	authURL := authorizeURL(ep, pk.Challenge, opts.Scope)
 	notify("Opening your browser to sign in to Invopop. If it does not open, visit:\n\n  " + authURL + "\n")
 	if opts.OpenBrowser != nil {
 		if err := opts.OpenBrowser(authURL); err != nil {
@@ -153,24 +133,23 @@ func Login(ctx context.Context, ep *Endpoints, opts *LoginOptions) (*Credentials
 		}
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-	var res callbackResult
-	select {
-	case res = <-results:
-	case <-ctx.Done():
-		return nil, errors.New("timed out waiting for the browser sign-in to complete")
+	code, err := opts.ReadCode()
+	if err != nil {
+		return nil, fmt.Errorf("reading the code: %w", err)
 	}
-	if res.err != nil {
-		return nil, res.err
+	code = strings.TrimSpace(code)
+	if code == "" {
+		return nil, errors.New("no code entered")
 	}
 
+	// PKCE is what makes a pasted code safe: without the verifier, which
+	// never leaves this process, nobody else can redeem it.
 	tok, err := ep.grant(ctx, url.Values{
 		paramGrantType:   {"authorization_code"},
 		paramClientID:    {ep.ClientID},
-		"code":           {res.code},
+		"code":           {code},
 		"code_verifier":  {pk.Verifier},
-		paramRedirectURI: {redirectURI},
+		paramRedirectURI: {redirectOOB},
 	})
 	if err != nil {
 		return nil, err
@@ -183,12 +162,11 @@ func Login(ctx context.Context, ep *Endpoints, opts *LoginOptions) (*Credentials
 	return c, nil
 }
 
-func authorizeURL(ep *Endpoints, redirectURI, state, challenge, scope string) string {
+func authorizeURL(ep *Endpoints, challenge, scope string) string {
 	q := url.Values{
 		"response_type":         {"code"},
 		paramClientID:           {ep.ClientID},
-		paramRedirectURI:        {redirectURI},
-		"state":                 {state},
+		paramRedirectURI:        {redirectOOB},
 		"code_challenge":        {challenge},
 		"code_challenge_method": {pkceMethod},
 	}
@@ -196,46 +174,6 @@ func authorizeURL(ep *Endpoints, redirectURI, state, challenge, scope string) st
 		q.Set("scope", scope)
 	}
 	return strings.TrimSuffix(ep.AccessHost, "/") + "/oauth/v1/authorize?" + q.Encode()
-}
-
-type callbackResult struct {
-	code string
-	err  error
-}
-
-// callbackHandler receives the browser once the user has signed in. Only the
-// first request that carries the right state is accepted; anything else is
-// refused without ending the wait, so a stray request to the port cannot
-// abort or hijack the login.
-func callbackHandler(state string, results chan<- callbackResult) http.Handler {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
-		q := r.URL.Query()
-		if q.Get("state") != state {
-			http.Error(w, "Invalid state. Please start the login again from the terminal.", http.StatusBadRequest)
-			return
-		}
-		res := callbackResult{code: q.Get("code")}
-		switch {
-		case q.Get("error") != "":
-			res.err = fmt.Errorf("sign-in failed: %s %s", q.Get("error"), q.Get("error_description"))
-		case res.code == "":
-			res.err = errors.New("sign-in failed: no authorization code returned")
-		}
-		select {
-		case results <- res:
-		default:
-			// Already have an answer; ignore replays.
-		}
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		if res.err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			_, _ = fmt.Fprint(w, "<p>Sign-in failed. You can close this window and check the terminal.</p>")
-			return
-		}
-		_, _ = fmt.Fprint(w, "<p>Signed in to Invopop. You can close this window and return to the terminal.</p>")
-	})
-	return mux
 }
 
 // grant calls the access service's OAuth token endpoint.

@@ -117,41 +117,37 @@ func setup(t *testing.T) (*fakeInvopop, *Session) {
 }
 
 // browser plays the part of the user signing in: it checks the authorize URL
-// and follows the redirect back to the CLI with a code.
-func (f *fakeInvopop) browser(state string) func(string) error {
-	return func(raw string) error {
-		u, err := url.Parse(raw)
-		if err != nil {
-			return err
-		}
-		q := u.Query()
-		if q.Get("code_challenge_method") != "S256" {
-			f.t.Errorf("challenge method = %q, want S256", q.Get("code_challenge_method"))
-		}
-		if q.Get(paramClientID) != testClientID {
-			f.t.Errorf("client_id = %q", q.Get("client_id"))
-		}
-		f.mu.Lock()
-		f.challenge = q.Get("code_challenge")
-		f.mu.Unlock()
-		if state == "" {
-			state = q.Get("state")
-		}
-		go func() {
-			res, err := http.Get(q.Get(paramRedirectURI) + "?code=abc&state=" + url.QueryEscape(state))
-			if err == nil {
-				res.Body.Close() //nolint:errcheck
-			}
-		}()
-		return nil
+// and remembers the challenge for the token endpoint to verify.
+func (f *fakeInvopop) browser(raw string) error {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return err
 	}
+	q := u.Query()
+	if q.Get("code_challenge_method") != "S256" {
+		f.t.Errorf("challenge method = %q, want S256", q.Get("code_challenge_method"))
+	}
+	if q.Get(paramClientID) != testClientID {
+		f.t.Errorf("client_id = %q", q.Get(paramClientID))
+	}
+	if q.Get(paramRedirectURI) != redirectOOB {
+		f.t.Errorf("redirect_uri = %q, want out-of-band", q.Get(paramRedirectURI))
+	}
+	f.mu.Lock()
+	f.challenge = q.Get("code_challenge")
+	f.mu.Unlock()
+	return nil
+}
+
+func pasted(code string) func() (string, error) {
+	return func() (string, error) { return code, nil }
 }
 
 func TestLoginAndWorkspaceToken(t *testing.T) {
 	f, s := setup(t)
 	ctx := context.Background()
 
-	c, err := Login(ctx, s.Endpoints, &LoginOptions{OpenBrowser: f.browser(""), Timeout: 5 * time.Second})
+	c, err := Login(ctx, s.Endpoints, &LoginOptions{OpenBrowser: f.browser, ReadCode: pasted("  abc\n")})
 	if err != nil {
 		t.Fatalf("login: %v", err)
 	}
@@ -244,19 +240,14 @@ func TestUserTokenRefresh(t *testing.T) {
 	})
 }
 
-func TestLoginRejectsWrongState(t *testing.T) {
+func TestLoginNeedsACode(t *testing.T) {
 	f, s := setup(t)
-	// The browser comes back with someone else's state: the login must not
-	// accept that code, and keeps waiting until it times out.
-	_, err := Login(context.Background(), s.Endpoints, &LoginOptions{
-		OpenBrowser: f.browser("forged"),
-		Timeout:     500 * time.Millisecond,
-	})
+	_, err := Login(context.Background(), s.Endpoints, &LoginOptions{OpenBrowser: f.browser, ReadCode: pasted("\n")})
 	if err == nil {
-		t.Fatal("expected the login to fail")
+		t.Fatal("expected an error for an empty code")
 	}
 	if len(f.grants) != 0 {
-		t.Fatalf("no code should have been redeemed, got %v", f.grants)
+		t.Fatalf("nothing should have been redeemed, got %v", f.grants)
 	}
 }
 

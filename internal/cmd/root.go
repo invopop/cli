@@ -16,8 +16,8 @@ const defaultAPIHost = "https://api.invopop.com"
 // the binary; --client-id or INVOPOP_CLIENT_ID override it.
 var clientIDs = map[string]string{
 	// TODO: fill in once the CLI's public OAuth apps are registered, each
-	// with the redirect URL http://127.0.0.1/callback.
-	// "https://api.invopop.com": "",
+	// with the redirect URL urn:ietf:wg:oauth:2.0:oob.
+	"https://api.invopop.com": "5vMS_y3ThQ8Xqg",
 	// "https://api.invopop.dev": "",
 }
 

@@ -46,8 +46,9 @@ invopop ping
 ```
 
 If it reports that you are not logged in, ask the user to run
-`invopop auth login` themselves: it opens a browser for them to sign in and
-choose a workspace, so you cannot complete it on their behalf. Afterwards
+`invopop auth login` themselves in their own terminal: they sign in through
+the browser, paste back the code it shows and choose a workspace. Never ask
+for that code or try to complete the login on their behalf. Afterwards
 commands work in that workspace, limited to the user's own permissions, and
 the token renews itself.
 
