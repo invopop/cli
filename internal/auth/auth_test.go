@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -287,5 +288,22 @@ func TestAccessHostFor(t *testing.T) {
 		if got := AccessHostFor(in); got != want {
 			t.Errorf("AccessHostFor(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+func TestLoginRefusesMismatchedEnvironments(t *testing.T) {
+	ep := &Endpoints{
+		APIHost:    "https://api.invopop.com",
+		AccessHost: "https://access.invopop.dev",
+		ClientID:   testClientID,
+	}
+	_, err := Login(context.Background(), ep, &LoginOptions{ReadCode: pasted("abc")})
+	if err == nil || !strings.Contains(err.Error(), "does not match") {
+		t.Fatalf("err = %v, want a host mismatch", err)
+	}
+
+	ep.AccessHost = "https://access.invopop.com/"
+	if err := ep.validate(); err != nil {
+		t.Fatalf("matching hosts refused: %v", err)
 	}
 }

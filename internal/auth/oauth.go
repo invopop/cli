@@ -72,7 +72,18 @@ func (ep *Endpoints) validate() error {
 	if ep.ClientID == "" {
 		return errors.New("missing OAuth client ID: set --client-id or INVOPOP_CLIENT_ID")
 	}
+	// Tokens from one environment are unknown to another's API, which only
+	// shows up later as a baffling key-not-found.
+	if want := AccessHostFor(ep.APIHost); want != "" && !sameHost(want, ep.AccessHost) {
+		return fmt.Errorf("access host %s does not match API host %s: pass --host for the same environment", ep.AccessHost, ep.APIHost)
+	}
 	return nil
+}
+
+func sameHost(a, b string) bool {
+	ua, errA := url.Parse(a)
+	ub, errB := url.Parse(b)
+	return errA == nil && errB == nil && strings.EqualFold(ua.Host, ub.Host)
 }
 
 // oauthToken is the access service's token endpoint response.

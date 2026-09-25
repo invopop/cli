@@ -17,8 +17,9 @@ const defaultAPIHost = "https://api.invopop.com"
 var clientIDs = map[string]string{
 	// TODO: fill in once the CLI's public OAuth apps are registered, each
 	// with the redirect URL urn:ietf:wg:oauth:2.0:oob.
-	"https://api.invopop.com": "5vMS_y3ThQ8Xqg",
-	// "https://api.invopop.dev": "",
+	"https://api.invopop.com":         "5vMS_y3ThQ8Xqg",
+	"https://api.invopop-staging.com": "5vMS_y3ThQ8Xqg",
+	"https://api.invopop.dev":         "5vMS_y3ThQ8Xqg",
 }
 
 const banner = `
