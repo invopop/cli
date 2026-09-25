@@ -222,12 +222,27 @@ func chooseWorkspace(cmd *cobra.Command, in *bufio.Reader, s *auth.Session, c *a
 		}
 	}
 	if want != "" {
+		var bySlug []*auth.Workspace
 		for _, w := range all {
-			if w.ID == want || strings.EqualFold(w.Slug, want) {
+			if w.ID == want {
 				return w, nil
 			}
+			if strings.EqualFold(w.Slug, want) {
+				bySlug = append(bySlug, w)
+			}
 		}
-		return nil, fmt.Errorf("no workspace %q among those you belong to: run `invopop auth workspace` to list them", want)
+		switch len(bySlug) {
+		case 1:
+			return bySlug[0], nil
+		case 0:
+			return nil, fmt.Errorf("no workspace %q among those you belong to: run `invopop auth workspace` to list them", want)
+		}
+		// A live workspace and its sandbox copy can share a slug.
+		msg := fmt.Sprintf("several workspaces use the slug %q, pick one by ID:", want)
+		for _, w := range bySlug {
+			msg += fmt.Sprintf("\n  %s  %s", w.ID, labels[w])
+		}
+		return nil, errors.New(msg)
 	}
 	switch {
 	case len(all) == 0:
