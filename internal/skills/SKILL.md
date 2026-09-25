@@ -38,7 +38,9 @@ Invopop is a platform for managing e-invoicing compliance across countries. The 
 
 ## Authentication
 
-The `INVOPOP_TOKEN` environment variable or `--token` flag must be set. Always test with:
+The `INVOPOP_TOKEN` environment variable or `--token` flag must be set. The API host
+defaults to `https://api.invopop.com`; set `INVOPOP_HOST` or `--host` to target another
+environment, as tokens are only valid on the environment that issued them. Always test with:
 
 ```bash
 invopop ping
@@ -68,7 +70,8 @@ invopop transform workflows list [--limit N] [--schema X]
 invopop transform workflows create [--file/-f path]
 invopop transform workflows fetch <id>
 invopop transform workflows update <id> [--file/-f path]
-invopop transform jobs create [--workflow-id X] [--silo-entry-id X | --file/-f path] [--wait N] [--key X]
+invopop transform jobs list [--created-at RFC3339] [--limit N] [--cursor X]
+invopop transform jobs create [--workflow-id X] [--silo-entry-id X | --file/-f path] [--wait N] [--key X] [--tags a,b] [--args k=v]
 invopop transform jobs fetch <id>
 invopop transform jobs fetch-key <key>
 
