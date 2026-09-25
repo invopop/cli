@@ -147,6 +147,13 @@ func (s *Session) Orgs(ctx context.Context, c *Credentials) ([]*Org, error) {
 	req.Header.Set("Authorization", "Bearer "+ut)
 	var orgs []*Org
 	if err := s.Endpoints.do(req, &orgs); err != nil {
+		var se *StatusError
+		if errors.As(err, &se) && se.Code == http.StatusForbidden {
+			// The sign-in worked but the token came back without the scopes
+			// asked for, which access does when the OAuth app may not issue
+			// them.
+			return nil, fmt.Errorf("listing workspaces: %w (the CLI's OAuth app %s may not be allowed to issue the requested scopes)", err, s.endpoints(c).ClientID)
+		}
 		return nil, fmt.Errorf("listing workspaces: %w", err)
 	}
 	return orgs, nil
