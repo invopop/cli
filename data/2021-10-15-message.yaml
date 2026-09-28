@@ -1,5 +1,0 @@
-doc:
-  $schema: "https://gobl.org/draft-0/note/message"
-  title: "Invopop CLI Message"
-  content: |-
-    This is a test message with some random *markdown* contents.

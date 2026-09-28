@@ -5,14 +5,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/invopop/invocli/internal/skills"
+	"github.com/invopop/cli/internal/skills"
 	"github.com/spf13/cobra"
 )
 
 func skillCmd() *cobra.Command {
 	skill := &cobra.Command{
 		Use:   "skill",
-		Short: "Manage the invocli AI skill for Claude Code",
+		Short: "Manage the invopop AI skill for Claude Code",
 	}
 
 	skill.AddCommand(skillInstallCmd())
@@ -24,7 +24,7 @@ func skillCmd() *cobra.Command {
 func skillInstallCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "install",
-		Short: "Install the invocli skill to ~/.claude/skills/invopop/",
+		Short: "Install the invopop skill to ~/.claude/skills/invopop/",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			home, err := os.UserHomeDir()
 			if err != nil {
@@ -42,7 +42,7 @@ func skillInstallCmd() *cobra.Command {
 			}
 
 			_, _ = fmt.Fprintf(os.Stdout, "Skill installed to %s\n", path)
-			_, _ = fmt.Fprintln(os.Stdout, "You can now use /invocli in Claude Code to manage your Invopop account.")
+			_, _ = fmt.Fprintln(os.Stdout, "You can now use /invopop in Claude Code to manage your Invopop account.")
 			return nil
 		},
 	}

@@ -3,8 +3,8 @@ package cmd
 import (
 	"encoding/json"
 
+	iohelper "github.com/invopop/cli/internal/io"
 	"github.com/invopop/client.go/invopop"
-	iohelper "github.com/invopop/invocli/internal/io"
 	"github.com/spf13/cobra"
 )
 

@@ -1,4 +1,4 @@
-module github.com/invopop/invocli
+module github.com/invopop/cli
 
 go 1.25.0
 

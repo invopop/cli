@@ -1,0 +1,58 @@
+#
+# Automatically tag a merge to main and publish a GitHub release with
+# cross-platform binaries via GoReleaser.
+#
+# Secrets required:
+#  * `GITHUB_TOKEN` - provided automatically by GitHub Actions.
+#
+
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  tag-build-publish:
+    name: Tag & Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: "0" # make sure we get all commits
+
+      - name: Get repo details
+        run: |
+          echo "COMMIT_TYPE=$(echo $GITHUB_REF | cut -d / -f 2)" >> $GITHUB_ENV
+
+      - name: Bump version and push tag
+        id: bump
+        if: env.COMMIT_TYPE != 'tags'
+        uses: anothrNick/github-tag-action@1.75.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_BRANCHES: main
+          WITH_V: true
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

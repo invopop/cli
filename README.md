@@ -1,79 +1,121 @@
-# InvoCLI
+# Invopop CLI
 
-Invoicing Command Line Interface - creating invoices quickly and easier from the command line.
+Command-line interface for the [Invopop](https://invopop.com) platform. Build and validate [GOBL](https://gobl.org) documents, manage silo entries and workflows, run transform jobs, and generate sequence numbers — all from your terminal.
 
-## Introduction
+## Installation
 
-The objective of InvoCLI is to demonstrate how the GoBL library and Invopop services can be used together to create digital invoices.
+### Pre-built binaries
 
-The application takes the provided yaml document and attempts to fill out all the missing details in order to output an official GoBL envelope. These can then be forwarded to Invopop for processing using a pre-defined workflow.
+Download the latest release for your platform from the [releases page](https://github.com/invopop/cli/releases).
 
-## How it Works
-
-On one side InvoCLI expects a configuration file with the base information of the supplier (your company) and digital signature private key details. These details are used on all invoices being generated.
-
-On the other, individual source data files in YAML define the basic input to be converted into complete GoBL JSON. The GoBL library automatically calculates taxes and totals, alongside validating that the contents look correct according to the region.
-
-## Build & Install
-
-Just execute the regular go build command:
-
-```go
-go build .
-```
-
-If you'd like to install the project in your global go bin directory (recommended), a simple `go install` will work:
+### From source
 
 ```bash
-go install github.com/invopop/invocli
+go install github.com/invopop/cli/cmd/invopop@latest
 ```
 
-## Configuration
+This produces a binary called `invopop` in your `$GOBIN`.
 
-When executing `invocli`, we check for configurations in two locations:
+## Authentication
 
-- `./config/config.yaml`, i.e. the configuration inside the current path.
-- `~/.invocli/config.yaml`, a shared path in your user's home.
-
-You can use the [sample](https://github.com/invopop/invocli/blob/main/config/config.yaml) to get started, and replace the relevant fields with the data for your environment. By default, `invocli` comes with configuration details for a testing environment.
-
-Most likely, you'll want to replace the `key` configuration and `api` endpoints.
-
-### Keys
-
-Generating a new ECDSA keypair is very straightforward. Simply run:
+### Sign in with your account (recommended)
 
 ```bash
-invocli keys generate
+invopop auth login
 ```
 
-```
-Private Key:
-{"use":"sig","kty":"EC","kid":"540d1414-ef88-4eb0-a7c9-16dca0e61252","crv":"P-256","alg":"ES256","x":"HT1cpo-joEGg2Hsd68Bcjv9gzWzX4uTlijjUUaMxNTw","y":"_1VS8OzbIklFz5i5heYP4GZ9_f3x0YIoNh7l2RiZnKo","d":"BkElJC9P-bdqGhq8jxvy-0eOZe5OAst6oO6KGEJHHDc"}
-Public Key:
-{"use":"sig","kty":"EC","kid":"540d1414-ef88-4eb0-a7c9-16dca0e61252","crv":"P-256","alg":"ES256","x":"HT1cpo-joEGg2Hsd68Bcjv9gzWzX4uTlijjUUaMxNTw","y":"_1VS8OzbIklFz5i5heYP4GZ9_f3x0YIoNh7l2RiZnKo"}
-```
-
-Copy the "Private Key" to your `config.yaml`.
-
-### API Host & Token
-
-There are two API hosts currently in use:
-
-- `https://api.invopop.dev` - exclusively for local development.
-- `https://api.invopop.com` - production usage.
-
-Set the host with `--host` or the `INVOPOP_HOST` environment variable; it defaults to
-production. A token is only valid on the environment that issued it.
-
-To generate an API token for your account, you must first log into the [Invopop Console](https://console.invopop.com). In the "Settings" section, you can access "Tokens" and click "New Token" to follow the steps to generate a new code. We use JSON Web Tokens for authentication, if you're interested, you can check the contents at [jwt.io](https://jwt.io/).
-
-## Running
-
-Execute the binary with the `build` argument and the source YAML file:
+This opens your browser to sign in to Invopop and asks you to paste back the
+code shown there, which works over SSH or from a container too (use
+`--no-browser` to just print the link). It then asks which workspace to work
+in, or pass `--workspace <id-or-slug>`. From then on, commands use a
+short-lived token that is restricted to that workspace and carries no more
+than your own permissions there. The CLI renews it on its own, so no API key
+is needed, and an agent driving the CLI can reach only what you can.
 
 ```bash
-invocli build ./data/2021-06-16-invoice.yaml
+invopop auth status              # who you are and which workspace is in use
+invopop auth workspace           # choose another workspace
+invopop auth workspace my-shop   # switch to it directly
+invopop auth workspace --list    # list them as JSON
+invopop auth token               # print a workspace token for curl etc.
+invopop auth logout
 ```
 
-If all goes well, a new complete json file will be output into the same directory.
+Sign-ins are stored per API host in your config directory (e.g.
+`~/.config/invopop/credentials.json`), readable only by you.
+
+### API keys
+
+Alternatively, generate a token from the [Invopop Console](https://console.invopop.com)
+under **Settings → Tokens** and pass it via the `INVOPOP_TOKEN` environment
+variable or the `--token` / `-t` flag. An explicit token always takes
+precedence over a stored sign-in.
+
+```bash
+export INVOPOP_TOKEN=eyJhbGciOi...
+invopop ping
+```
+
+The API host defaults to `https://api.invopop.com`. Set `--host` or the `INVOPOP_HOST`
+environment variable for another environment, e.g. `https://api.invopop.dev` for local
+development; tokens and sign-ins only work on the environment that issued them.
+
+## Commands
+
+| Command | Description |
+|---|---|
+| `invopop auth` | Sign in with your account and choose a workspace. |
+| `invopop ping` | Test API connectivity. |
+| `invopop workspace` | Show details of the current workspace. |
+| `invopop silo` | Manage silo entries, files, and GOBL documents. |
+| `invopop transform` | Manage transform workflows and jobs. |
+| `invopop sequence` | Manage sequence series and entries for invoice numbering. |
+| `invopop skill` | Install the Invopop skill for [Claude Code](https://claude.com/claude-code). |
+
+Run any command with `--help` for full flag and subcommand details.
+
+## Examples
+
+Build and validate a GOBL invoice locally:
+
+```bash
+invopop silo build --file invoice.yaml
+```
+
+Sign a GOBL document with the workspace's key:
+
+```bash
+invopop silo sign --file invoice.yaml
+```
+
+Create a silo entry from a local document:
+
+```bash
+invopop silo entries create --file invoice.yaml
+```
+
+Run a transform job against an existing entry and wait for completion:
+
+```bash
+invopop transform jobs create \
+    --workflow-id 01h2x5... \
+    --silo-entry-id 01h2x6... \
+    --wait 30
+```
+
+Commands that take a document accept YAML or JSON on `--file`/`-f`, or on stdin. Results are printed to stdout as JSON, easy to pipe into `jq` or another command; `silo files download` writes the raw file instead.
+
+## Claude Code integration
+
+The CLI ships with a [Claude Code](https://claude.com/claude-code) skill that lets an AI agent drive your Invopop workspace through this binary. Install it with:
+
+```bash
+invopop skill install
+```
+
+Then invoke `/invopop` inside Claude Code.
+
+## Documentation
+
+- [Invopop docs](https://docs.invopop.com) — platform concepts, workflows, apps, and API reference.
+- [GOBL docs](https://docs.gobl.org) — document schemas, tax regimes, and addons.

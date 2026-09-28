@@ -1,12 +1,12 @@
 ---
-name: invocli
-description: Manage an Invopop account via the invocli CLI. Use when creating GOBL invoices, managing workflows, or interacting with the Invopop API for e-invoicing compliance.
-allowed-tools: Bash(invocli *), Bash(curl *api.invopop.com*), WebFetch
+name: invopop
+description: Manage an Invopop account via the invopop CLI. Use when creating GOBL invoices, managing workflows, or interacting with the Invopop API for e-invoicing compliance.
+allowed-tools: Bash(invopop *), Bash(curl *api.invopop.com*), WebFetch
 user-invocable: true
 argument-hint: <task description>
 ---
 
-You are an AI agent that manages an Invopop account via the `invocli` CLI tool.
+You are an AI agent that manages an Invopop account via the `invopop` CLI tool.
 
 ## Documentation
 
@@ -38,59 +38,79 @@ Invopop is a platform for managing e-invoicing compliance across countries. The 
 
 ## Authentication
 
-The `INVOPOP_TOKEN` environment variable or `--token` flag must be set. The API host
-defaults to `https://api.invopop.com`; set `INVOPOP_HOST` or `--host` to target another
-environment, as tokens are only valid on the environment that issued them. Always test with:
+The CLI acts either as the user, through a stored sign-in, or through an API
+key in `INVOPOP_TOKEN` / `--token`. The API host defaults to
+`https://api.invopop.com`; `INVOPOP_HOST` or `--host` selects another
+environment, and a sign-in or token only works where it was issued. Always
+test first with:
 
 ```bash
-invocli ping
+invopop ping
 ```
 
-If auth fails, ask the user to set their token.
+If it reports that you are not logged in, ask the user to run
+`invopop auth login` themselves in their own terminal: they sign in through
+the browser, paste back the code it shows and choose a workspace. Never ask
+for that code or try to complete the login on their behalf. Afterwards
+commands work in that workspace, limited to the user's own permissions, and
+the token renews itself.
+
+- `invopop auth status` shows the signed-in user and the current workspace.
+  Check it before making changes so you act in the workspace the user means.
+- `invopop auth workspace --list` lists the user's workspaces; switch only when the
+  user asks, with `invopop auth workspace <id-or-slug>`.
+- `invopop auth token` prints a short-lived workspace token for use with curl.
+
+A 403 means the user lacks permission for that action in this workspace. Tell
+them; do not look for another way round it.
 
 ## Command Reference
 
 ```
-invocli ping                                    # Test connectivity
-invocli workspace                               # Show workspace info
+invopop auth login [--workspace X]              # User signs in (interactive, browser)
+invopop auth status                             # Signed-in user and workspace
+invopop auth workspace [id-or-slug] [--list]    # Switch workspace, or list them
+invopop auth token                              # Print a workspace token
+invopop ping                                    # Test connectivity
+invopop workspace                               # Show workspace info
 
 # Silo (document storage)
-invocli silo entries list [--folder X] [--limit N]
-invocli silo entries create [--file/-f path] [--folder X] [--key X]
-invocli silo entries fetch <id>
-invocli silo entries fetch-key <key>
-invocli silo entries update <id> [--file/-f path]
-invocli silo files create <entry-id> --file/-f path [--name X] [--category X]
-invocli silo files download <entry-id> <file-id>
-invocli silo build [--file/-f path] [--envelop]
-invocli silo sign [--file/-f path]
+invopop silo entries list [--folder X] [--limit N]
+invopop silo entries create [--file/-f path] [--folder X] [--key X]
+invopop silo entries fetch <id>
+invopop silo entries fetch-key <key>
+invopop silo entries update <id> [--file/-f path]
+invopop silo files create <entry-id> --file/-f path [--name X] [--category X]
+invopop silo files download <entry-id> <file-id>
+invopop silo build [--file/-f path] [--envelop]
+invopop silo sign [--file/-f path]
 
 # Transform (workflows & jobs)
-invocli transform workflows list [--limit N] [--schema X]
-invocli transform workflows create [--file/-f path]
-invocli transform workflows fetch <id>
-invocli transform workflows update <id> [--file/-f path]
-invocli transform jobs list [--created-at RFC3339] [--limit N] [--cursor X]
-invocli transform jobs create [--workflow-id X] [--silo-entry-id X | --file/-f path] [--wait N] [--key X] [--tags a,b] [--args k=v]
-invocli transform jobs fetch <id>
-invocli transform jobs fetch-key <key>
+invopop transform workflows list [--limit N] [--schema X]
+invopop transform workflows create [--file/-f path]
+invopop transform workflows fetch <id>
+invopop transform workflows update <id> [--file/-f path]
+invopop transform jobs list [--created-at RFC3339] [--limit N] [--cursor X]
+invopop transform jobs create [--workflow-id X] [--silo-entry-id X | --file/-f path] [--wait N] [--key X] [--tags a,b] [--args k=v]
+invopop transform jobs fetch <id>
+invopop transform jobs fetch-key <key>
 
 # Sequence (invoice numbering)
-invocli sequence series list
-invocli sequence series create [--name X] [--prefix X] [--padding N] [--start N]
-invocli sequence series fetch <id>
-invocli sequence entries create <series-id>
-invocli sequence entries fetch <series-id> <id>
+invopop sequence series list
+invopop sequence series create [--name X] [--prefix X] [--padding N] [--start N]
+invopop sequence series fetch <id>
+invopop sequence entries create <series-id>
+invopop sequence entries fetch <series-id> <id>
 ```
 
 All commands accept `--file/-f` for file input or stdin. YAML is auto-converted to JSON. Output is always JSON.
 
 ## Best Practices
 
-- Validate documents with `invocli silo build` before submitting to workflows
+- Validate documents with `invopop silo build` before submitting to workflows
 - Use `--envelop` with `silo build` to wrap raw GOBL documents into envelopes
 - Use `--key` on entries and jobs for idempotency
 - Use `--wait` on job creation to block until completion
 - Check `faults` in job responses for errors
-- Always check `invocli workspace` first to confirm which workspace you're operating on
+- Always check `invopop workspace` first to confirm which workspace you're operating on
 - When unsure about workflow step actions or GOBL fields, check the docs before guessing
