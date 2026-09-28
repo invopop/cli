@@ -6,7 +6,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/invopop/client.go v0.62.0
 	github.com/spf13/cobra v1.9.1
-	golang.org/x/term v0.39.0
+	golang.org/x/term v0.43.0
 )
 
 require (
@@ -27,8 +27,8 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
-	golang.org/x/net v0.48.0 // indirect
-	golang.org/x/sys v0.40.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	resty.dev/v3 v3.0.0-beta.3 // indirect
