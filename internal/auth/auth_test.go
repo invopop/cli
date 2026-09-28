@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -305,5 +306,19 @@ func TestLoginRefusesMismatchedEnvironments(t *testing.T) {
 	ep.AccessHost = "https://access.invopop.com/"
 	if err := ep.validate(); err != nil {
 		t.Fatalf("matching hosts refused: %v", err)
+	}
+}
+
+func TestRefreshUntil(t *testing.T) {
+	exp := time.Date(2026, 10, 5, 15, 1, 34, 0, time.UTC)
+	payload := base64.RawURLEncoding.EncodeToString([]byte(`{"src":"a","exp":` + strconv.FormatInt(exp.Unix(), 10) + `}`))
+	c := &Credentials{RefreshToken: "eyJhbGciOiJFUzI1NiJ9." + payload + ".sig"}
+	if got := c.RefreshUntil(); !got.Equal(exp) {
+		t.Fatalf("RefreshUntil = %v, want %v", got, exp)
+	}
+	for _, tok := range []string{"", "not-a-token", "a.!!!.c", "a." + base64.RawURLEncoding.EncodeToString([]byte("{}")) + ".c"} {
+		if got := (&Credentials{RefreshToken: tok}).RefreshUntil(); !got.IsZero() {
+			t.Errorf("RefreshUntil(%q) = %v, want zero", tok, got)
+		}
 	}
 }

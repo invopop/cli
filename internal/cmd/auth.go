@@ -117,7 +117,8 @@ type authStatus struct {
 	UserID                  string    `json:"user_id,omitempty"`
 	WorkspaceID             string    `json:"workspace_id,omitempty"`
 	WorkspaceName           string    `json:"workspace_name,omitempty"`
-	SessionExpiresAt        time.Time `json:"session_expires_at"`
+	AccessTokenExpiresAt    time.Time `json:"access_token_expires_at"`
+	RefreshUntil            time.Time `json:"refresh_until,omitzero"`
 	WorkspaceTokenExpiresAt time.Time `json:"workspace_token_expires_at,omitzero"`
 }
 
@@ -140,7 +141,8 @@ func authStatusCmd(getSession func() (*auth.Session, error)) *cobra.Command {
 				UserID:                  c.UserID,
 				WorkspaceID:             c.WorkspaceID,
 				WorkspaceName:           c.WorkspaceName,
-				SessionExpiresAt:        c.ExpiresAt,
+				AccessTokenExpiresAt:    c.ExpiresAt,
+				RefreshUntil:            c.RefreshUntil(),
 				WorkspaceTokenExpiresAt: c.WorkspaceTokenExpiresAt,
 			})
 		},

@@ -1,11 +1,13 @@
 package auth
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -31,6 +33,28 @@ type Credentials struct {
 
 	WorkspaceToken          string    `json:"workspace_token,omitempty"`
 	WorkspaceTokenExpiresAt time.Time `json:"workspace_token_expires_at"`
+}
+
+// RefreshUntil is the latest the user token can be renewed without signing
+// in again, read from the refresh token's own expiry. Access moves it on with
+// every refresh and can end it sooner by revoking the sign-in. Zero if unknown.
+func (c *Credentials) RefreshUntil() time.Time {
+	parts := strings.Split(c.RefreshToken, ".")
+	if len(parts) != 3 {
+		return time.Time{}
+	}
+	raw, err := base64.RawURLEncoding.DecodeString(strings.TrimRight(parts[1], "="))
+	if err != nil {
+		return time.Time{}
+	}
+	// Read only for display; access verifies the signature when it is used.
+	var p struct {
+		Expires int64 `json:"exp"`
+	}
+	if json.Unmarshal(raw, &p) != nil || p.Expires == 0 {
+		return time.Time{}
+	}
+	return time.Unix(p.Expires, 0).UTC()
 }
 
 // Store persists credentials for each API host in a single file readable
