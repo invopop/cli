@@ -74,7 +74,7 @@ invopop transform jobs create \
     --wait 30
 ```
 
-All commands accept YAML or JSON on `--file`/`-f` (or on stdin), and emit JSON on stdout — easy to pipe into `jq` or into another command.
+Commands that take a document accept YAML or JSON on `--file`/`-f`, or on stdin. Results are printed to stdout as JSON, easy to pipe into `jq` or another command; `silo files download` writes the raw file instead.
 
 ## Claude Code integration
 
