@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -72,18 +73,50 @@ func (ep *Endpoints) validate() error {
 	if ep.ClientID == "" {
 		return errors.New("missing OAuth client ID: set --client-id or INVOPOP_CLIENT_ID")
 	}
+	// Codes and tokens must not travel in cleartext.
+	for _, h := range []string{ep.APIHost, ep.AccessHost} {
+		if !secureHost(h) {
+			return fmt.Errorf("%s must use https", h)
+		}
+	}
 	// Tokens from one environment are unknown to another's API, which only
 	// shows up later as a baffling key-not-found.
-	if want := AccessHostFor(ep.APIHost); want != "" && !sameHost(want, ep.AccessHost) {
+	if want := AccessHostFor(ep.APIHost); want != "" && NormalizeHost(want) != NormalizeHost(ep.AccessHost) {
 		return fmt.Errorf("access host %s does not match API host %s: pass --host for the same environment", ep.AccessHost, ep.APIHost)
 	}
 	return nil
 }
 
-func sameHost(a, b string) bool {
-	ua, errA := url.Parse(a)
-	ub, errB := url.Parse(b)
-	return errA == nil && errB == nil && strings.EqualFold(ua.Host, ub.Host)
+// NormalizeHost gives a base URL one spelling, lower-case and without a
+// trailing slash, so it works as a key for client IDs and stored sign-ins.
+func NormalizeHost(h string) string {
+	h = strings.TrimSpace(h)
+	u, err := url.Parse(h)
+	if err != nil || u.Host == "" {
+		return strings.TrimSuffix(h, "/")
+	}
+	u.Scheme = strings.ToLower(u.Scheme)
+	u.Host = strings.ToLower(u.Host)
+	u.Path = strings.TrimSuffix(u.Path, "/")
+	return u.String()
+}
+
+// secureHost reports whether h is https, or plain http on a loopback address
+// for local testing.
+func secureHost(h string) bool {
+	u, err := url.Parse(h)
+	if err != nil {
+		return false
+	}
+	switch u.Scheme {
+	case "https":
+		return true
+	case "http":
+		host := u.Hostname()
+		ip := net.ParseIP(host)
+		return host == "localhost" || (ip != nil && ip.IsLoopback())
+	}
+	return false
 }
 
 // oauthToken is the access service's token endpoint response.

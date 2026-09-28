@@ -54,7 +54,8 @@ func Root() *cobra.Command {
 	root.PersistentFlags().StringVar(&clientID, "client-id", "", "OAuth client ID for sign-in (or INVOPOP_CLIENT_ID)")
 
 	apiHost := func() string {
-		return firstNonEmpty(flagOrEnv(host, "INVOPOP_HOST"), defaultAPIHost)
+		// One spelling for client-ID lookup, stored sign-ins and requests.
+		return auth.NormalizeHost(firstNonEmpty(flagOrEnv(host, "INVOPOP_HOST"), defaultAPIHost))
 	}
 
 	getSession := func() (*auth.Session, error) {
@@ -65,7 +66,7 @@ func Root() *cobra.Command {
 		h := apiHost()
 		ep := &auth.Endpoints{
 			APIHost:    h,
-			AccessHost: firstNonEmpty(flagOrEnv(accessHost, "INVOPOP_ACCESS_HOST"), auth.AccessHostFor(h)),
+			AccessHost: auth.NormalizeHost(firstNonEmpty(flagOrEnv(accessHost, "INVOPOP_ACCESS_HOST"), auth.AccessHostFor(h))),
 			ClientID:   firstNonEmpty(flagOrEnv(clientID, "INVOPOP_CLIENT_ID"), clientIDs[h]),
 		}
 		return &auth.Session{Store: store, Endpoints: ep}, nil

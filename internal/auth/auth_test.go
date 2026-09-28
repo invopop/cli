@@ -322,3 +322,52 @@ func TestRefreshUntil(t *testing.T) {
 		}
 	}
 }
+
+func TestEndpointsRequireHTTPS(t *testing.T) {
+	ep := &Endpoints{APIHost: "https://api.invopop.com", AccessHost: "http://access.invopop.com", ClientID: testClientID}
+	if err := ep.validate(); err == nil {
+		t.Fatal("plain http access host accepted")
+	}
+	ep = &Endpoints{APIHost: "http://127.0.0.1:3000", AccessHost: "http://localhost:3001", ClientID: testClientID}
+	if err := ep.validate(); err != nil {
+		t.Fatalf("loopback http refused: %v", err)
+	}
+}
+
+func TestNormalizeHost(t *testing.T) {
+	for in, want := range map[string]string{
+		"https://api.invopop.com/":  "https://api.invopop.com",
+		"HTTPS://API.Invopop.com":   "https://api.invopop.com",
+		" https://api.invopop.dev ": "https://api.invopop.dev",
+		"http://127.0.0.1:3000/":    "http://127.0.0.1:3000",
+	} {
+		if got := NormalizeHost(in); got != want {
+			t.Errorf("NormalizeHost(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestStoreConcurrentSaves(t *testing.T) {
+	st := &Store{Path: filepath.Join(t.TempDir(), "invopop", "credentials.json")}
+	var wg sync.WaitGroup
+	for i := 0; i < 20; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			if err := st.Save("https://host"+strconv.Itoa(i), &Credentials{AccessToken: strconv.Itoa(i)}); err != nil {
+				t.Error(err)
+			}
+		}(i)
+	}
+	wg.Wait()
+	for i := 0; i < 20; i++ {
+		c, err := st.Load("https://host" + strconv.Itoa(i))
+		if err != nil || c == nil || c.AccessToken != strconv.Itoa(i) {
+			t.Fatalf("host %d lost: %+v %v", i, c, err)
+		}
+	}
+	entries, _ := os.ReadDir(filepath.Dir(st.Path))
+	if len(entries) != 1 {
+		t.Fatalf("left behind temp or lock files: %v", entries)
+	}
+}
