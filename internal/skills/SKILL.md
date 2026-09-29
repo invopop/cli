@@ -38,17 +38,39 @@ Invopop is a platform for managing e-invoicing compliance across countries. The 
 
 ## Authentication
 
-The `INVOPOP_TOKEN` environment variable or `--token` flag must be set. Always test with:
+The CLI acts either as the user, through a stored sign-in, or through an API
+key in `INVOPOP_TOKEN` / `--token`. The API host defaults to
+`https://api.invopop.com`; `INVOPOP_HOST` or `--host` selects another
+environment, and a sign-in or token only works where it was issued. Always
+test first with:
 
 ```bash
 invopop ping
 ```
 
-If auth fails, ask the user to set their token.
+If it reports that you are not logged in, ask the user to run
+`invopop auth login` themselves in their own terminal: they sign in through
+the browser, paste back the code it shows and choose a workspace. Never ask
+for that code or try to complete the login on their behalf. Afterwards
+commands work in that workspace, limited to the user's own permissions, and
+the token renews itself.
+
+- `invopop auth status` shows the signed-in user and the current workspace.
+  Check it before making changes so you act in the workspace the user means.
+- `invopop auth workspace --list` lists the user's workspaces; switch only when the
+  user asks, with `invopop auth workspace <id-or-slug>`.
+- `invopop auth token` prints a short-lived workspace token for use with curl.
+
+A 403 means the user lacks permission for that action in this workspace. Tell
+them; do not look for another way round it.
 
 ## Command Reference
 
 ```
+invopop auth login [--workspace X]              # User signs in (interactive, browser)
+invopop auth status                             # Signed-in user and workspace
+invopop auth workspace [id-or-slug] [--list]    # Switch workspace, or list them
+invopop auth token                              # Print a workspace token
 invopop ping                                    # Test connectivity
 invopop workspace                               # Show workspace info
 
@@ -68,7 +90,8 @@ invopop transform workflows list [--limit N] [--schema X]
 invopop transform workflows create [--file/-f path]
 invopop transform workflows fetch <id>
 invopop transform workflows update <id> [--file/-f path]
-invopop transform jobs create [--workflow-id X] [--silo-entry-id X | --file/-f path] [--wait N] [--key X]
+invopop transform jobs list [--created-at RFC3339] [--limit N] [--cursor X]
+invopop transform jobs create [--workflow-id X] [--silo-entry-id X | --file/-f path] [--wait N] [--key X] [--tags a,b] [--args k=v]
 invopop transform jobs fetch <id>
 invopop transform jobs fetch-key <key>
 
