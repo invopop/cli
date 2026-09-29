@@ -38,20 +38,6 @@ func accessWorkspaceCmd(getClient func() (*invopop.Client, error)) *cobra.Comman
 	}
 }
 
-// workspaceListing is one workspace in `access workspaces`, flattened out of
-// its org so it can be read or filtered at a glance.
-type workspaceListing struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Slug    string `json:"slug"`
-	Ref     string `json:"ref"`
-	Sandbox bool   `json:"sandbox"`
-	OrgID   string `json:"org_id"`
-	OrgName string `json:"org_name"`
-	Default bool   `json:"default"`
-	InUse   bool   `json:"in_use"`
-}
-
 func accessWorkspacesCmd(getSession func() (*auth.Session, error), apiToken func() string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "workspaces",
@@ -89,27 +75,7 @@ workspace and cannot list others.`,
 					inUse = ws.ID
 				}
 			}
-			return iohelper.PrintJSON(listWorkspaces(orgs, c.WorkspaceID, inUse))
+			return iohelper.PrintJSON(auth.ListWorkspaces(orgs, c.WorkspaceID, inUse))
 		},
 	}
-}
-
-func listWorkspaces(orgs []*auth.Org, defaultID, inUseID string) []*workspaceListing {
-	list := make([]*workspaceListing, 0)
-	for _, o := range orgs {
-		for _, w := range o.Workspaces {
-			list = append(list, &workspaceListing{
-				ID:      w.ID,
-				Name:    w.Name,
-				Slug:    w.Slug,
-				Ref:     w.Ref(),
-				Sandbox: w.Sandbox,
-				OrgID:   o.ID,
-				OrgName: o.Name,
-				Default: w.ID == defaultID,
-				InUse:   w.ID == inUseID,
-			})
-		}
-	}
-	return list
 }

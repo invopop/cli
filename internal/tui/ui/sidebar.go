@@ -36,6 +36,7 @@ type Sidebar struct {
 	cursor    int
 	items     []sidebarItem
 	workspace string
+	sandbox   bool
 	focused   bool
 }
 
@@ -64,9 +65,10 @@ func (s Sidebar) Focused() bool {
 	return s.focused
 }
 
-// SetWorkspace updates the workspace display name.
-func (s *Sidebar) SetWorkspace(name string) {
+// SetWorkspace updates the workspace shown at the top, marking a sandbox.
+func (s *Sidebar) SetWorkspace(name string, sandbox bool) {
 	s.workspace = name
+	s.sandbox = sandbox
 }
 
 // SetSize updates the sidebar dimensions.
@@ -154,6 +156,9 @@ func (s Sidebar) View() string {
 			Bold(true).
 			PaddingLeft(2)
 		b.WriteString(wsStyle.Render(s.workspace))
+		if s.sandbox {
+			b.WriteString(" " + lipgloss.NewStyle().Foreground(Warning).Render("sandbox"))
+		}
 		b.WriteString("\n")
 	}
 
