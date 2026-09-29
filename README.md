@@ -26,30 +26,51 @@ invopop auth login
 
 This opens your browser to sign in to Invopop and asks you to paste back the
 code shown there, which works over SSH or from a container too (use
-`--no-browser` to just print the link). It then asks which workspace to work
-in, or pass `--workspace <id-or-slug>`. From then on, commands use a
+`--no-browser` to just print the link). It then asks which workspace to use
+by default, or pass `--workspace <id-or-slug>`. From then on, commands use a
 short-lived token that is restricted to that workspace and carries no more
 than your own permissions there. The CLI renews it on its own, so no API key
 is needed, and an agent driving the CLI can reach only what you can.
 
+Sign-ins are stored per API host in your config directory (e.g.
+`~/.config/invopop/credentials.json`), readable only by you, together with
+the tokens for each workspace you have used.
+
 ```bash
-invopop auth status              # who you are and which workspace is in use
-invopop auth workspace           # choose another workspace
-invopop auth workspace my-shop   # switch to it directly
-invopop auth workspace --list    # list them as JSON
-invopop auth token               # print a workspace token for curl etc.
+invopop auth status                    # who you are and which workspace is in use
+invopop auth workspace                 # choose another default workspace
+invopop auth workspace my-shop         # switch the default directly
+invopop auth workspace sandbox/my-shop # or to its sandbox
+invopop auth token                     # print a workspace token for curl etc.
 invopop auth logout
 ```
 
-Sign-ins are stored per API host in your config directory (e.g.
-`~/.config/invopop/credentials.json`), readable only by you.
+#### Working in several workspaces
+
+The workspace chosen above is the default for every terminal. To act in
+another one without changing it, name it with `--workspace` (`-w`) for a
+single command, or set `INVOPOP_WORKSPACE` for a whole terminal or project
+directory (e.g. with [direnv](https://direnv.net)):
+
+```bash
+invopop access workspaces              # every workspace you belong to, with its ref
+invopop -w sandbox/my-shop silo entries list
+export INVOPOP_WORKSPACE=my-other-shop
+```
+
+A workspace is named by its ID or its slug. A bare slug means a live
+workspace; prefix it with `sandbox/` for a sandbox one, since the two can
+share a slug. Each workspace keeps its own token, so moving between them is
+quick. `invopop auth status` shows which workspace a command will use and
+what chose it.
 
 ### API keys
 
 Alternatively, generate a token from the [Invopop Console](https://console.invopop.com)
 under **Settings → Tokens** and pass it via the `INVOPOP_TOKEN` environment
 variable or the `--token` / `-t` flag. An explicit token always takes
-precedence over a stored sign-in.
+precedence over a stored sign-in. A token already belongs to one workspace,
+so it cannot be combined with `--workspace` or `INVOPOP_WORKSPACE`.
 
 ```bash
 export INVOPOP_TOKEN=eyJhbGciOi...
@@ -64,15 +85,17 @@ development; tokens and sign-ins only work on the environment that issued them.
 
 | Command | Description |
 |---|---|
-| `invopop auth` | Sign in with your account and choose a workspace. |
+| `invopop auth` | Sign in with your account and choose a default workspace. |
 | `invopop ping` | Test API connectivity. |
-| `invopop workspace` | Show details of the current workspace. |
+| `invopop access` | Show the workspace in use, or list all those you belong to. |
 | `invopop silo` | Manage silo entries, files, and GOBL documents. |
 | `invopop transform` | Manage transform workflows and jobs. |
 | `invopop sequence` | Manage sequence series and entries for invoice numbering. |
 | `invopop skill` | Install the Invopop skill for [Claude Code](https://claude.com/claude-code). |
 
-Run any command with `--help` for full flag and subcommand details.
+Run any command with `--help` for full flag and subcommand details. Add
+`-w <id-or-slug>` to any command to run it in a workspace other than the
+default.
 
 ## Examples
 

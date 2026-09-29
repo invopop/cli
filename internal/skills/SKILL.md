@@ -55,10 +55,16 @@ for that code or try to complete the login on their behalf. Afterwards
 commands work in that workspace, limited to the user's own permissions, and
 the token renews itself.
 
-- `invopop auth status` shows the signed-in user and the current workspace.
-  Check it before making changes so you act in the workspace the user means.
-- `invopop auth workspace --list` lists the user's workspaces; switch only when the
-  user asks, with `invopop auth workspace <id-or-slug>`.
+- `invopop auth status` shows the signed-in user, the workspace in use and
+  what chose it (`workspace_source`). Check it before making changes so you
+  act in the workspace the user means.
+- `invopop access workspaces` lists the user's workspaces as JSON, each with
+  the `ref` to pass to `-w` and whether it is the default or in use. Use another
+  workspace only when the user asks. For a single command, pass
+  `-w <id-or-slug>`, which leaves the default alone. Change the default with
+  `invopop auth workspace <id-or-slug>` only when the user asks for that,
+  because it applies to all their terminals.
+- A bare slug names a live workspace; use `sandbox/<slug>` for a sandbox one.
 - `invopop auth token` prints a short-lived workspace token for use with curl.
 
 A 403 means the user lacks permission for that action in this workspace. Tell
@@ -69,10 +75,12 @@ them; do not look for another way round it.
 ```
 invopop auth login [--workspace X]              # User signs in (interactive, browser)
 invopop auth status                             # Signed-in user and workspace
-invopop auth workspace [id-or-slug] [--list]    # Switch workspace, or list them
+invopop auth workspace [id-or-slug]             # Switch default workspace
+invopop -w <id-or-slug> <command>               # Run one command in another workspace
 invopop auth token                              # Print a workspace token
 invopop ping                                    # Test connectivity
-invopop workspace                               # Show workspace info
+invopop access workspace                        # Show the workspace in use
+invopop access workspaces                       # List all workspaces (needs a sign-in)
 
 # Silo (document storage)
 invopop silo entries list [--folder X] [--limit N]
@@ -112,5 +120,5 @@ All commands accept `--file/-f` for file input or stdin. YAML is auto-converted 
 - Use `--key` on entries and jobs for idempotency
 - Use `--wait` on job creation to block until completion
 - Check `faults` in job responses for errors
-- Always check `invopop workspace` first to confirm which workspace you're operating on
+- Always check `invopop access workspace` first to confirm which workspace you're operating on
 - When unsure about workflow step actions or GOBL fields, check the docs before guessing

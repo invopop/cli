@@ -286,6 +286,8 @@ func (c *Credentials) applyToken(tok *oauthToken) {
 		c.Email = tok.Info.Email
 	}
 	// Any workspace token was minted from the previous user token.
-	c.WorkspaceToken = ""
-	c.WorkspaceTokenExpiresAt = time.Time{}
+	for _, k := range c.Workspaces {
+		k.Token = ""
+		k.TokenExpiresAt = time.Time{}
+	}
 }
