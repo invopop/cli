@@ -18,8 +18,30 @@ import (
 // sign-in whose default is w1.
 func signedIn(t *testing.T) string {
 	t.Helper()
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/access/v1/orgs" || r.Header.Get("Authorization") != "Bearer user" {
+	mux := http.NewServeMux()
+	// Workspace tokens are minted from the user token, and name their
+	// workspace so the fake can tell which one a request is for.
+	mux.HandleFunc("POST /access/v1/workspace/{id}/token", func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer user" {
+			http.Error(w, "bad user token", http.StatusUnauthorized)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"access_token": "ws-" + r.PathValue("id"),
+			"expires_at":   time.Now().Add(30 * time.Minute).Unix(),
+		})
+	})
+	mux.HandleFunc("GET /access/v1/workspace", func(w http.ResponseWriter, r *http.Request) {
+		id, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ws-")
+		if !ok {
+			http.Error(w, "not a workspace token", http.StatusUnauthorized)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json") // resty decodes only JSON
+		_ = json.NewEncoder(w).Encode(map[string]string{"id": id})
+	})
+	mux.HandleFunc("GET /access/v1/orgs", func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer user" {
 			http.NotFound(w, r)
 			return
 		}
@@ -32,7 +54,8 @@ func signedIn(t *testing.T) string {
 				{ID: "w3", Name: "Other", Slug: "other"},
 			}},
 		})
-	}))
+	})
+	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
 
 	dir := t.TempDir()
@@ -79,17 +102,17 @@ func run(t *testing.T, args ...string) (string, error) {
 func TestAccessWorkspaces(t *testing.T) {
 	host := signedIn(t)
 
-	list := func(t *testing.T, args ...string) map[string]*workspaceListing {
+	list := func(t *testing.T, args ...string) map[string]*auth.WorkspaceListing {
 		t.Helper()
 		out, err := run(t, append([]string{"--host", host, "access", "workspaces"}, args...)...)
 		if err != nil {
 			t.Fatal(err)
 		}
-		var got []*workspaceListing
+		var got []*auth.WorkspaceListing
 		if err := json.Unmarshal([]byte(out), &got); err != nil {
 			t.Fatalf("%v in %s", err, out)
 		}
-		byID := make(map[string]*workspaceListing)
+		byID := make(map[string]*auth.WorkspaceListing)
 		for _, w := range got {
 			byID[w.ID] = w
 		}
@@ -134,5 +157,27 @@ func TestAccessWorkspacesNotSignedIn(t *testing.T) {
 	_, err := run(t, "--host", host, "access", "workspaces")
 	if err == nil || !strings.Contains(err.Error(), "not logged in") {
 		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestSignedInClientUsesWorkspaceToken(t *testing.T) {
+	host := signedIn(t)
+	for args, want := range map[string]string{
+		"":                  "w1",
+		"-w sandbox/acme":   "w2",
+		"--workspace other": "w3",
+	} {
+		cmd := []string{"--host", host, "access", "workspace"}
+		if args != "" {
+			cmd = append(cmd, strings.Fields(args)...)
+		}
+		out, err := run(t, cmd...)
+		if err != nil {
+			t.Fatalf("%s: %v", args, err)
+		}
+		var ws struct{ ID string }
+		if err := json.Unmarshal([]byte(out), &ws); err != nil || ws.ID != want {
+			t.Errorf("%q: workspace = %q (%v), want %s", args, ws.ID, err, want)
+		}
 	}
 }

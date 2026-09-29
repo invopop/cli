@@ -91,6 +91,7 @@ development; tokens and sign-ins only work on the environment that issued them.
 | `invopop silo` | Manage silo entries, files, and GOBL documents. |
 | `invopop transform` | Manage transform workflows and jobs. |
 | `invopop sequence` | Manage sequence series and entries for invoice numbering. |
+| `invopop tui` | Browse entries, workflows and jobs in an interactive terminal UI. |
 | `invopop skill` | Install the Invopop skill for [Claude Code](https://claude.com/claude-code). |
 
 Run any command with `--help` for full flag and subcommand details. Add
@@ -127,6 +128,15 @@ invopop transform jobs create \
 ```
 
 Commands that take a document accept YAML or JSON on `--file`/`-f`, or on stdin. Results are printed to stdout as JSON, easy to pipe into `jq` or another command; `silo files download` writes the raw file instead.
+
+## Terminal UI
+
+`invopop tui` opens an interactive view of your silo entries, workflows and
+jobs. It uses the same credentials as every other command and opens in the
+same workspace, so `invopop tui -w sandbox/my-shop` starts in that sandbox.
+Press `w` to switch workspace from inside it: `enter` switches for the
+session only, and `ctrl+d` also makes the choice your default. Switching
+needs a sign-in, since an API token belongs to a single workspace.
 
 ## Claude Code integration
 

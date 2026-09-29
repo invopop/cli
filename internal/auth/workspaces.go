@@ -77,3 +77,39 @@ func (c *Credentials) knownList() []*Workspace {
 	}
 	return list
 }
+
+// WorkspaceListing is one workspace in a flat listing of those the user
+// belongs to, as `invopop access workspaces` prints them.
+type WorkspaceListing struct {
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Slug    string `json:"slug"`
+	Ref     string `json:"ref"`
+	Sandbox bool   `json:"sandbox"`
+	OrgID   string `json:"org_id"`
+	OrgName string `json:"org_name"`
+	Default bool   `json:"default"`
+	InUse   bool   `json:"in_use"`
+}
+
+// ListWorkspaces flattens orgs into one row per workspace, marking the
+// default and the one in use.
+func ListWorkspaces(orgs []*Org, defaultID, inUseID string) []*WorkspaceListing {
+	list := make([]*WorkspaceListing, 0)
+	for _, o := range orgs {
+		for _, w := range o.Workspaces {
+			list = append(list, &WorkspaceListing{
+				ID:      w.ID,
+				Name:    w.Name,
+				Slug:    w.Slug,
+				Ref:     w.Ref(),
+				Sandbox: w.Sandbox,
+				OrgID:   o.ID,
+				OrgName: o.Name,
+				Default: w.ID == defaultID,
+				InUse:   w.ID == inUseID,
+			})
+		}
+	}
+	return list
+}

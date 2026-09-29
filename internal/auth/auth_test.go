@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -88,6 +89,9 @@ func (f *fakeInvopop) handler() http.Handler {
 				{ID: "w3", Name: "Live (sandbox)", Slug: "live", Sandbox: true},
 			},
 		}})
+	})
+	mux.HandleFunc("GET /echo", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(r.Header.Get("Authorization")))
 	})
 	mux.HandleFunc("POST /access/v1/workspace/{id}/token", func(w http.ResponseWriter, r *http.Request) {
 		var in mintRequest
@@ -623,5 +627,40 @@ func TestRefreshKeepsNewerDefault(t *testing.T) {
 	}
 	if stored.WorkspaceID != "w2" {
 		t.Errorf("default put back to %q", stored.WorkspaceID)
+	}
+}
+
+func TestTransportRenewsTokens(t *testing.T) {
+	f, s := setup(t)
+	loggedIn(t, f, s)
+	hc := &http.Client{Transport: s.Transport(nil)}
+	get := func() string {
+		t.Helper()
+		req, _ := http.NewRequest(http.MethodGet, s.Endpoints.APIHost+"/echo", nil)
+		req.Header.Set("Authorization", "Bearer stale")
+		res, err := hc.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer res.Body.Close() //nolint:errcheck
+		b, _ := io.ReadAll(res.Body)
+		if req.Header.Get("Authorization") != "Bearer stale" {
+			t.Error("the caller's request was changed")
+		}
+		return string(b)
+	}
+
+	if got := get(); got != "Bearer ws-w1-1" {
+		t.Fatalf("Authorization = %q", got)
+	}
+	// Once the token is near expiry, the next request gets a fresh one.
+	if err := s.Store.modify(s.Endpoints.APIHost, func(c *Credentials) bool {
+		c.Workspaces["w1"].TokenExpiresAt = time.Now()
+		return true
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if got := get(); got != "Bearer ws-w1-2" {
+		t.Fatalf("Authorization after expiry = %q", got)
 	}
 }

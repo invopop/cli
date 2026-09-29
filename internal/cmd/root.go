@@ -84,26 +84,46 @@ func Root() *cobra.Command {
 	// stored `invopop auth login`, renewing it as needed.
 	apiToken := func() string { return flagOrEnv(token, "INVOPOP_TOKEN") }
 
-	getClient := func() (*invopop.Client, error) {
-		t := apiToken()
-		if t != "" && flagOrEnv(workspace, workspaceEnv) != "" {
-			return nil, errors.New("--workspace or " + workspaceEnv + " cannot be used with an API token, which already belongs to one workspace")
-		}
-		if t == "" {
-			s, err := getSession()
-			if err != nil {
-				return nil, err
-			}
-			if t, err = s.WorkspaceToken(root.Context()); err != nil {
-				return nil, err
-			}
-		}
+	// clientFor builds a client for the workspace ref names, or for the
+	// default when ref is empty. An explicit token (flag, then env var) wins;
+	// otherwise the stored sign-in supplies a token for the workspace, renewed
+	// on each request as needed so long-running commands keep working.
+	clientFor := func(ref string) (*invopop.Client, error) {
 		// Same host as the session, so a sign-in is always used where it
 		// was issued.
-		return invopop.New(
-			invopop.WithConfig(&invopop.Config{BaseURL: apiHost()}),
-			invopop.WithAuthToken(t),
-		), nil
+		conf := invopop.WithConfig(&invopop.Config{BaseURL: apiHost()})
+		if t := apiToken(); t != "" {
+			if ref != "" {
+				return nil, errors.New("--workspace or " + workspaceEnv + " cannot be used with an API token, which already belongs to one workspace")
+			}
+			return invopop.New(conf, invopop.WithAuthToken(t)), nil
+		}
+		s, err := getSession()
+		if err != nil {
+			return nil, err
+		}
+		s.Workspace = ref
+		c, err := s.Load()
+		if err != nil {
+			return nil, err
+		}
+		ws, err := s.Current(root.Context(), c)
+		if err != nil {
+			return nil, err
+		}
+		// Pin the ID, so the workspace cannot change under a running
+		// command, and get a token now so problems show before any request.
+		s.Workspace = ws.ID
+		if _, err := s.WorkspaceToken(root.Context()); err != nil {
+			return nil, err
+		}
+		client := invopop.New(conf)
+		hc := client.HTTPClient()
+		hc.Transport = s.Transport(hc.Transport)
+		return client, nil
+	}
+	getClient := func() (*invopop.Client, error) {
+		return clientFor(flagOrEnv(workspace, workspaceEnv))
 	}
 
 	root.AddCommand(pingCmd(getClient))
@@ -111,6 +131,7 @@ func Root() *cobra.Command {
 	root.AddCommand(siloCmd(getClient))
 	root.AddCommand(transformCmd(getClient))
 	root.AddCommand(sequenceCmd(getClient))
+	root.AddCommand(tuiCmd(getClient, clientFor, getSession, apiToken))
 	root.AddCommand(skillCmd())
 	root.AddCommand(authCmd(getSession))
 
