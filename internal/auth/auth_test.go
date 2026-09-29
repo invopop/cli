@@ -416,6 +416,9 @@ func TestFindWorkspace(t *testing.T) {
 	if got := list[1].Ref(); got != "sandbox/shop" {
 		t.Errorf("Ref = %q", got)
 	}
+	if got := (&Workspace{ID: "w9", Sandbox: true}).Ref(); got != "w9" {
+		t.Errorf("Ref without a slug = %q, want the ID", got)
+	}
 }
 
 // loggedIn signs in and makes w1 the default.
@@ -549,5 +552,76 @@ func TestLoginDropsWorkspaceTokens(t *testing.T) {
 	c.applyToken(&oauthToken{AccessToken: "new", ExpiresIn: 3600})
 	if c.Workspaces["w1"].Token != "" || c.Workspaces["w1"].Slug != "live" {
 		t.Fatalf("after a new user token: %+v", c.Workspaces["w1"])
+	}
+}
+
+func TestSelectWorkspaceKeepsNewerCredentials(t *testing.T) {
+	f, s := setup(t)
+	ctx := context.Background()
+	loggedIn(t, f, s)
+	snapshot, _ := s.Load()
+
+	// Meanwhile another terminal renews the sign-in and caches a token for
+	// another workspace.
+	other := *s
+	other.Workspace = "sandbox/test"
+	if _, err := other.WorkspaceToken(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Store.modify(s.Endpoints.APIHost, func(c *Credentials) bool {
+		c.RefreshToken = "rotated"
+		return true
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	ws, err := s.ResolveWorkspace(ctx, snapshot, "sandbox/live")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.SelectWorkspace(ctx, snapshot, ws); err != nil {
+		t.Fatal(err)
+	}
+	stored, _ := s.Load()
+	if stored.WorkspaceID != "w3" {
+		t.Errorf("default = %q, want w3", stored.WorkspaceID)
+	}
+	if stored.RefreshToken != "rotated" {
+		t.Errorf("refresh token put back to %q", stored.RefreshToken)
+	}
+	if stored.Workspaces["w2"].Token == "" {
+		t.Error("another workspace's token was dropped")
+	}
+}
+
+func TestRefreshKeepsNewerDefault(t *testing.T) {
+	f, s := setup(t)
+	ctx := context.Background()
+	loggedIn(t, f, s)
+
+	// This command read the credentials with the user token about to expire...
+	stale, _ := s.Load()
+	stale.ExpiresAt = time.Now()
+	if err := s.Save(stale); err != nil {
+		t.Fatal(err)
+	}
+	stale, _ = s.Load()
+	// ...then another terminal changed the default.
+	if err := s.Store.modify(s.Endpoints.APIHost, func(c *Credentials) bool {
+		c.WorkspaceID = "w2"
+		return true
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := s.UserToken(ctx, stale); err != nil {
+		t.Fatal(err)
+	}
+	stored, _ := s.Load()
+	if stored.AccessToken != "user-refresh_token" {
+		t.Errorf("renewed token not stored: %q", stored.AccessToken)
+	}
+	if stored.WorkspaceID != "w2" {
+		t.Errorf("default put back to %q", stored.WorkspaceID)
 	}
 }

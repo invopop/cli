@@ -168,8 +168,18 @@ func (s *Session) UserToken(ctx context.Context, c *Credentials) (string, error)
 		}
 		return "", err
 	}
+	signedIn := c.UserID
 	c.applyToken(tok)
-	if err := s.Save(c); err != nil {
+	// Apply the new tokens to what is stored now rather than saving c, so a
+	// default or token another command stored since c was read survives.
+	err = s.Store.modify(s.Endpoints.APIHost, func(stored *Credentials) bool {
+		if stored.UserID != signedIn {
+			return false // signed in again as someone else meanwhile
+		}
+		stored.applyToken(tok)
+		return true
+	})
+	if err != nil {
 		return "", err
 	}
 	return c.AccessToken, nil
@@ -186,7 +196,26 @@ func (s *Session) SelectWorkspace(ctx context.Context, c *Credentials, ws *Works
 	if _, err := s.tokenFor(ctx, c, ws.ID); err != nil {
 		return err
 	}
-	return s.Save(c)
+	// Change only the default, keeping whatever else other commands have
+	// stored since c was read, such as renewed user tokens.
+	saved := false
+	err := s.Store.modify(s.Endpoints.APIHost, func(stored *Credentials) bool {
+		if stored.UserID != c.UserID {
+			return false
+		}
+		stored.WorkspaceID, stored.WorkspaceName = ws.ID, ws.Name
+		sk := stored.known(ws.ID)
+		sk.Name, sk.Slug, sk.Sandbox = ws.Name, ws.Slug, ws.Sandbox
+		saved = true
+		return true
+	})
+	if err != nil {
+		return err
+	}
+	if !saved {
+		return errors.New("the stored sign-in changed while choosing a workspace: run the command again")
+	}
+	return nil
 }
 
 // Org is an organization the user belongs to, with its workspaces.

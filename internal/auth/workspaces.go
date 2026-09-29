@@ -15,8 +15,12 @@ const SandboxPrefix = "sandbox/"
 var ErrUnknownWorkspace = errors.New("unknown workspace")
 
 // Ref is how the workspace is named on the command line: its slug, with
-// SandboxPrefix for a sandbox workspace.
+// SandboxPrefix for a sandbox workspace, or its ID when the slug is not
+// known, as for a default stored by an earlier version.
 func (w *Workspace) Ref() string {
+	if w.Slug == "" {
+		return w.ID
+	}
 	if w.Sandbox {
 		return SandboxPrefix + w.Slug
 	}
