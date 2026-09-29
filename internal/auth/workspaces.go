@@ -55,7 +55,7 @@ func FindWorkspace(list []*Workspace, ref string) (*Workspace, error) {
 		if len(other) > 0 && !sandbox {
 			return nil, fmt.Errorf("%w %q: no live workspace uses that slug, did you mean %q?", ErrUnknownWorkspace, ref, other[0].Ref())
 		}
-		return nil, fmt.Errorf("%w %q among those you belong to: list them with `invopop auth workspace --list`", ErrUnknownWorkspace, ref)
+		return nil, fmt.Errorf("%w %q among those you belong to: list them with `invopop access workspaces`", ErrUnknownWorkspace, ref)
 	}
 	// Nothing stops two orgs using the same slug.
 	msg := fmt.Sprintf("several workspaces match %q, pick one by ID:", ref)

@@ -82,8 +82,10 @@ func Root() *cobra.Command {
 	// Build client lazily so subcommands can access it. An explicit token
 	// (flag, then env var) wins; otherwise use the workspace token from a
 	// stored `invopop auth login`, renewing it as needed.
+	apiToken := func() string { return flagOrEnv(token, "INVOPOP_TOKEN") }
+
 	getClient := func() (*invopop.Client, error) {
-		t := flagOrEnv(token, "INVOPOP_TOKEN")
+		t := apiToken()
 		if t != "" && flagOrEnv(workspace, workspaceEnv) != "" {
 			return nil, errors.New("--workspace or " + workspaceEnv + " cannot be used with an API token, which already belongs to one workspace")
 		}
@@ -105,7 +107,7 @@ func Root() *cobra.Command {
 	}
 
 	root.AddCommand(pingCmd(getClient))
-	root.AddCommand(workspaceCmd(getClient))
+	root.AddCommand(accessCmd(getClient, getSession, apiToken))
 	root.AddCommand(siloCmd(getClient))
 	root.AddCommand(transformCmd(getClient))
 	root.AddCommand(sequenceCmd(getClient))

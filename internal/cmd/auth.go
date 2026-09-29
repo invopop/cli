@@ -179,15 +179,14 @@ func workspaceSource(cmd *cobra.Command) string {
 }
 
 func authWorkspaceCmd(getSession func() (*auth.Session, error)) *cobra.Command {
-	var list bool
 	cmd := &cobra.Command{
 		Use:   "workspace [id-or-slug]",
 		Short: "Choose the default workspace to work in",
 		Long: `Choose the default workspace to work in.
 
 Shows a picker, or switches straight to the ID or slug given; name a sandbox
-workspace as sandbox/<slug>. Use --list to print your workspaces as JSON
-instead, e.g. for scripts or agents.
+workspace as sandbox/<slug>. To list them as JSON, e.g. for scripts or
+agents, use ` + "`invopop access workspaces`" + `.
 
 The default applies to every terminal. To use another workspace for a single
 command pass --workspace, or set ` + workspaceEnv + ` for a whole terminal.`,
@@ -204,12 +203,6 @@ command pass --workspace, or set ` + workspaceEnv + ` for a whole terminal.`,
 			want := ""
 			if len(args) > 0 {
 				want = args[0]
-			} else if list {
-				orgs, err := s.Orgs(cmd.Context(), c)
-				if err != nil {
-					return err
-				}
-				return iohelper.PrintJSON(orgs)
 			}
 			ws, err := chooseWorkspace(cmd, nil, s, c, want)
 			if err != nil {
@@ -225,7 +218,6 @@ command pass --workspace, or set ` + workspaceEnv + ` for a whole terminal.`,
 			return nil
 		},
 	}
-	cmd.Flags().BoolVar(&list, "list", false, "print your workspaces as JSON instead of choosing")
 	return cmd
 }
 
@@ -281,7 +273,7 @@ func chooseWorkspace(cmd *cobra.Command, in *bufio.Reader, s *auth.Session, c *a
 	case len(all) == 1:
 		return all[0], nil
 	case !term.IsTerminal(int(os.Stdin.Fd())):
-		return nil, errors.New("several workspaces available and no terminal to choose in: pass an ID or slug, or list them with `invopop auth workspace --list`")
+		return nil, errors.New("several workspaces available and no terminal to choose in: pass an ID or slug, or list them with `invopop access workspaces`")
 	}
 
 	cmd.PrintErrln("\nChoose a workspace:")

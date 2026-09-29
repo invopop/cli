@@ -41,7 +41,6 @@ invopop auth status                    # who you are and which workspace is in u
 invopop auth workspace                 # choose another default workspace
 invopop auth workspace my-shop         # switch the default directly
 invopop auth workspace sandbox/my-shop # or to its sandbox
-invopop auth workspace --list          # list them as JSON
 invopop auth token                     # print a workspace token for curl etc.
 invopop auth logout
 ```
@@ -54,6 +53,7 @@ single command, or set `INVOPOP_WORKSPACE` for a whole terminal or project
 directory (e.g. with [direnv](https://direnv.net)):
 
 ```bash
+invopop access workspaces              # every workspace you belong to, with its ref
 invopop -w sandbox/my-shop silo entries list
 export INVOPOP_WORKSPACE=my-other-shop
 ```
@@ -87,7 +87,7 @@ development; tokens and sign-ins only work on the environment that issued them.
 |---|---|
 | `invopop auth` | Sign in with your account and choose a default workspace. |
 | `invopop ping` | Test API connectivity. |
-| `invopop workspace` | Show details of the workspace in use. |
+| `invopop access` | Show the workspace in use, or list all those you belong to. |
 | `invopop silo` | Manage silo entries, files, and GOBL documents. |
 | `invopop transform` | Manage transform workflows and jobs. |
 | `invopop sequence` | Manage sequence series and entries for invoice numbering. |
