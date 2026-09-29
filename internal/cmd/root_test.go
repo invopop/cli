@@ -1,6 +1,9 @@
 package cmd
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestFlagOrEnv(t *testing.T) {
 	const env = "INVOCLI_TEST_VALUE"
@@ -25,4 +28,17 @@ func TestFlagOrEnv(t *testing.T) {
 			t.Errorf("got %q, want empty", got)
 		}
 	})
+}
+
+func TestWorkspaceRefusedWithAPIToken(t *testing.T) {
+	// An API token belongs to one workspace, so naming another is refused
+	// before any request is made.
+	t.Setenv("INVOPOP_TOKEN", "key")
+	t.Setenv(workspaceEnv, "")
+	root := Root()
+	root.SetArgs([]string{"ping", "-w", "sandbox/shop"})
+	err := root.Execute()
+	if err == nil || !strings.Contains(err.Error(), "cannot be used with an API token") {
+		t.Fatalf("err = %v", err)
+	}
 }

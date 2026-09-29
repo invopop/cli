@@ -12,11 +12,11 @@ import (
 )
 
 // Credentials are what a login leaves behind for one API host: the user's
-// OAuth tokens, the workspace they chose, and the most recent workspace
-// token minted for it.
+// OAuth tokens, the default workspace they chose, and what the CLI knows of
+// each workspace they have used, including the latest token minted for it.
 //
 // The user tokens reach every workspace the user belongs to, so they never
-// leave this file: API calls are made with the short-lived workspace token
+// leave this file: API calls are made with a short-lived workspace token
 // only, which is what keeps an agent driving the CLI inside one workspace.
 type Credentials struct {
 	ClientID   string `json:"client_id"`
@@ -28,11 +28,59 @@ type Credentials struct {
 	RefreshToken string    `json:"refresh_token,omitempty"`
 	ExpiresAt    time.Time `json:"expires_at"`
 
+	// WorkspaceID is the default workspace, used unless a command names
+	// another.
 	WorkspaceID   string `json:"workspace_id,omitempty"`
 	WorkspaceName string `json:"workspace_name,omitempty"`
 
-	WorkspaceToken          string    `json:"workspace_token,omitempty"`
-	WorkspaceTokenExpiresAt time.Time `json:"workspace_token_expires_at"`
+	// Workspaces holds what is known of each workspace, keyed by ID, so one
+	// can be found by slug and its token reused without asking the API.
+	Workspaces map[string]*KnownWorkspace `json:"workspaces,omitempty"`
+
+	// Written by earlier versions, which kept a token for the default
+	// workspace only; moved into Workspaces when read.
+	LegacyWorkspaceToken          string    `json:"workspace_token,omitempty"`
+	LegacyWorkspaceTokenExpiresAt time.Time `json:"workspace_token_expires_at,omitzero"`
+}
+
+// KnownWorkspace is what the CLI remembers of one workspace: enough to find
+// it again by slug, and the latest token minted for it.
+type KnownWorkspace struct {
+	Name    string `json:"name,omitempty"`
+	Slug    string `json:"slug,omitempty"`
+	Sandbox bool   `json:"sandbox,omitempty"`
+
+	Token          string    `json:"token,omitempty"`
+	TokenExpiresAt time.Time `json:"token_expires_at,omitzero"`
+}
+
+// known returns the entry for workspace id, adding an empty one if needed.
+func (c *Credentials) known(id string) *KnownWorkspace {
+	if c.Workspaces == nil {
+		c.Workspaces = make(map[string]*KnownWorkspace)
+	}
+	k := c.Workspaces[id]
+	if k == nil {
+		k = new(KnownWorkspace)
+		c.Workspaces[id] = k
+	}
+	return k
+}
+
+// migrate moves a token stored by an earlier version into Workspaces.
+func (c *Credentials) migrate() {
+	if c.LegacyWorkspaceToken != "" && c.WorkspaceID != "" {
+		k := c.known(c.WorkspaceID)
+		if k.Name == "" {
+			k.Name = c.WorkspaceName
+		}
+		if k.Token == "" {
+			k.Token = c.LegacyWorkspaceToken
+			k.TokenExpiresAt = c.LegacyWorkspaceTokenExpiresAt
+		}
+	}
+	c.LegacyWorkspaceToken = ""
+	c.LegacyWorkspaceTokenExpiresAt = time.Time{}
 }
 
 // RefreshUntil is the latest the user token can be renewed without signing
@@ -84,6 +132,11 @@ func (s *Store) readAll() (map[string]*Credentials, error) {
 	}
 	if err := json.Unmarshal(data, &all); err != nil {
 		return nil, fmt.Errorf("parsing credentials %s: %w", s.Path, err)
+	}
+	for _, c := range all {
+		if c != nil {
+			c.migrate()
+		}
 	}
 	return all, nil
 }
@@ -179,6 +232,17 @@ func (s *Store) Save(host string, c *Credentials) error {
 	return s.update(func(all map[string]*Credentials) bool {
 		all[host] = c
 		return true
+	})
+}
+
+// modify runs fn on the credentials stored for host, under the lock, and
+// writes them back unless fn returns false. It does nothing when there are
+// none. Unlike Save it leaves alone whatever fn does not touch, so a command
+// caching a token cannot undo what another process just stored.
+func (s *Store) modify(host string, fn func(c *Credentials) bool) error {
+	return s.update(func(all map[string]*Credentials) bool {
+		c := all[host]
+		return c != nil && fn(c)
 	})
 }
 

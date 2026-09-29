@@ -87,7 +87,7 @@ func authLoginCmd(getSession func() (*auth.Session, error)) *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVarP(&workspace, "workspace", "w", "", "workspace ID or slug to use after signing in")
+	cmd.Flags().StringVarP(&workspace, "workspace", "w", "", "workspace ID or slug to make the default after signing in")
 	cmd.Flags().StringVar(&scope, "scope", defaultScope, "OAuth scopes to request")
 	cmd.Flags().BoolVar(&noBrowser, "no-browser", false, "only print the sign-in URL, e.g. over SSH")
 	return cmd
@@ -112,11 +112,18 @@ func authLogoutCmd(getSession func() (*auth.Session, error)) *cobra.Command {
 }
 
 type authStatus struct {
-	Host                    string    `json:"host"`
-	Email                   string    `json:"email,omitempty"`
-	UserID                  string    `json:"user_id,omitempty"`
-	WorkspaceID             string    `json:"workspace_id,omitempty"`
-	WorkspaceName           string    `json:"workspace_name,omitempty"`
+	Host   string `json:"host"`
+	Email  string `json:"email,omitempty"`
+	UserID string `json:"user_id,omitempty"`
+	// The workspace commands act in, and what chose it.
+	WorkspaceID     string `json:"workspace_id,omitempty"`
+	WorkspaceName   string `json:"workspace_name,omitempty"`
+	WorkspaceRef    string `json:"workspace_ref,omitempty"`
+	WorkspaceSource string `json:"workspace_source"`
+	// Shown only when a command-line or env override is in use.
+	DefaultWorkspaceID   string `json:"default_workspace_id,omitempty"`
+	DefaultWorkspaceName string `json:"default_workspace_name,omitempty"`
+
 	AccessTokenExpiresAt    time.Time `json:"access_token_expires_at"`
 	RefreshUntil            time.Time `json:"refresh_until,omitzero"`
 	WorkspaceTokenExpiresAt time.Time `json:"workspace_token_expires_at,omitzero"`
@@ -126,7 +133,7 @@ func authStatusCmd(getSession func() (*auth.Session, error)) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
 		Short: "Show who you are signed in as and which workspace is in use",
-		RunE: func(_ *cobra.Command, _ []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			s, err := getSession()
 			if err != nil {
 				return err
@@ -135,29 +142,54 @@ func authStatusCmd(getSession func() (*auth.Session, error)) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return iohelper.PrintJSON(&authStatus{
+			ws, err := s.Current(cmd.Context(), c)
+			if err != nil {
+				return err
+			}
+			st := &authStatus{
 				Host:                    s.Endpoints.APIHost,
 				Email:                   c.Email,
 				UserID:                  c.UserID,
-				WorkspaceID:             c.WorkspaceID,
-				WorkspaceName:           c.WorkspaceName,
+				WorkspaceID:             ws.ID,
+				WorkspaceName:           ws.Name,
+				WorkspaceRef:            ws.Ref(),
+				WorkspaceSource:         workspaceSource(cmd),
 				AccessTokenExpiresAt:    c.ExpiresAt,
 				RefreshUntil:            c.RefreshUntil(),
-				WorkspaceTokenExpiresAt: c.WorkspaceTokenExpiresAt,
-			})
+				WorkspaceTokenExpiresAt: c.TokenExpiry(ws.ID),
+			}
+			if s.Workspace != "" {
+				st.DefaultWorkspaceID = c.WorkspaceID
+				st.DefaultWorkspaceName = c.WorkspaceName
+			}
+			return iohelper.PrintJSON(st)
 		},
 	}
 }
 
+// workspaceSource says what picked the workspace a command uses.
+func workspaceSource(cmd *cobra.Command) string {
+	if f := cmd.Flags().Lookup("workspace"); f != nil && f.Changed {
+		return "--workspace"
+	}
+	if os.Getenv(workspaceEnv) != "" {
+		return workspaceEnv
+	}
+	return "default"
+}
+
 func authWorkspaceCmd(getSession func() (*auth.Session, error)) *cobra.Command {
-	var list bool
 	cmd := &cobra.Command{
 		Use:   "workspace [id-or-slug]",
-		Short: "Choose another workspace to work in",
-		Long: `Choose another workspace to work in.
+		Short: "Choose the default workspace to work in",
+		Long: `Choose the default workspace to work in.
 
-Shows a picker, or switches straight to the ID or slug given. Use --list to
-print your workspaces as JSON instead, e.g. for scripts or agents.`,
+Shows a picker, or switches straight to the ID or slug given; name a sandbox
+workspace as sandbox/<slug>. To list them as JSON, e.g. for scripts or
+agents, use ` + "`invopop access workspaces`" + `.
+
+The default applies to every terminal. To use another workspace for a single
+command pass --workspace, or set ` + workspaceEnv + ` for a whole terminal.`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s, err := getSession()
@@ -171,12 +203,6 @@ print your workspaces as JSON instead, e.g. for scripts or agents.`,
 			want := ""
 			if len(args) > 0 {
 				want = args[0]
-			} else if list {
-				orgs, err := s.Orgs(cmd.Context(), c)
-				if err != nil {
-					return err
-				}
-				return iohelper.PrintJSON(orgs)
 			}
 			ws, err := chooseWorkspace(cmd, nil, s, c, want)
 			if err != nil {
@@ -185,19 +211,21 @@ print your workspaces as JSON instead, e.g. for scripts or agents.`,
 			if err := s.SelectWorkspace(cmd.Context(), c, ws); err != nil {
 				return err
 			}
-			cmd.PrintErrf("Using workspace %s (%s).\n", ws.Name, ws.ID)
+			cmd.PrintErrf("Default workspace is now %s (%s).\n", ws.Name, ws.ID)
+			if v := os.Getenv(workspaceEnv); v != "" {
+				cmd.PrintErrf("%s=%s still overrides it in this terminal.\n", workspaceEnv, v)
+			}
 			return nil
 		},
 	}
-	cmd.Flags().BoolVar(&list, "list", false, "print your workspaces as JSON instead of choosing")
 	return cmd
 }
 
 func authTokenCmd(getSession func() (*auth.Session, error)) *cobra.Command {
 	return &cobra.Command{
 		Use:   "token",
-		Short: "Print a short-lived token for the current workspace",
-		Long: `Print a short-lived token for the current workspace, for use with other
+		Short: "Print a short-lived token for the workspace in use",
+		Long: `Print a short-lived token for the workspace in use, for use with other
 tools such as curl. It is restricted to the workspace and expires within 30
 minutes; run this again for a fresh one.`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -218,6 +246,9 @@ minutes; run this again for a fresh one.`,
 // chooseWorkspace picks the workspace matching want (an ID or slug). With no
 // preference it takes the only workspace there is, or asks at a terminal.
 func chooseWorkspace(cmd *cobra.Command, in *bufio.Reader, s *auth.Session, c *auth.Credentials, want string) (*auth.Workspace, error) {
+	if want != "" {
+		return s.ResolveWorkspace(cmd.Context(), c, want)
+	}
 	orgs, err := s.Orgs(cmd.Context(), c)
 	if err != nil {
 		return nil, err
@@ -232,32 +263,9 @@ func chooseWorkspace(cmd *cobra.Command, in *bufio.Reader, s *auth.Session, c *a
 				labels[w] += " (sandbox)"
 			}
 			if w.ID == c.WorkspaceID {
-				labels[w] += "  ← current"
+				labels[w] += "  ← default"
 			}
 		}
-	}
-	if want != "" {
-		var bySlug []*auth.Workspace
-		for _, w := range all {
-			if w.ID == want {
-				return w, nil
-			}
-			if strings.EqualFold(w.Slug, want) {
-				bySlug = append(bySlug, w)
-			}
-		}
-		switch len(bySlug) {
-		case 1:
-			return bySlug[0], nil
-		case 0:
-			return nil, fmt.Errorf("no workspace %q among those you belong to: run `invopop auth workspace` to list them", want)
-		}
-		// A live workspace and its sandbox copy can share a slug.
-		msg := fmt.Sprintf("several workspaces use the slug %q, pick one by ID:", want)
-		for _, w := range bySlug {
-			msg += fmt.Sprintf("\n  %s  %s", w.ID, labels[w])
-		}
-		return nil, errors.New(msg)
 	}
 	switch {
 	case len(all) == 0:
@@ -265,12 +273,12 @@ func chooseWorkspace(cmd *cobra.Command, in *bufio.Reader, s *auth.Session, c *a
 	case len(all) == 1:
 		return all[0], nil
 	case !term.IsTerminal(int(os.Stdin.Fd())):
-		return nil, errors.New("several workspaces available and no terminal to choose in: pass an ID or slug, or list them with `invopop auth workspace --list`")
+		return nil, errors.New("several workspaces available and no terminal to choose in: pass an ID or slug, or list them with `invopop access workspaces`")
 	}
 
 	cmd.PrintErrln("\nChoose a workspace:")
 	for i, w := range all {
-		cmd.PrintErrf("  %2d) %s  [%s]\n", i+1, labels[w], w.Slug)
+		cmd.PrintErrf("  %2d) %s  [%s]\n", i+1, labels[w], w.Ref())
 	}
 	if in == nil {
 		in = bufio.NewReader(cmd.InOrStdin())
