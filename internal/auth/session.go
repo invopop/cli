@@ -23,6 +23,9 @@ const refreshMargin = time.Minute
 type Session struct {
 	Store     *Store
 	Endpoints *Endpoints
+	// Workspace, when set, is an ID or slug naming the workspace to use
+	// instead of the stored default, for this session only.
+	Workspace string
 }
 
 // Load returns the stored credentials for the API host.
@@ -55,26 +58,93 @@ func (s *Session) endpoints(c *Credentials) *Endpoints {
 	return &ep
 }
 
-// WorkspaceToken returns a workspace token that will stay valid for at least
-// a minute, minting a new one when the stored one is too close to expiry.
+// WorkspaceToken returns a token for the workspace in use that will stay
+// valid for at least a minute, minting a new one when the stored one is too
+// close to expiry.
 func (s *Session) WorkspaceToken(ctx context.Context) (string, error) {
 	c, err := s.Load()
 	if err != nil {
 		return "", err
 	}
+	ws, err := s.Current(ctx, c)
+	if err != nil {
+		return "", err
+	}
+	return s.tokenFor(ctx, c, ws.ID)
+}
+
+// Current is the workspace commands act in: the one named by s.Workspace,
+// or else the stored default.
+func (s *Session) Current(ctx context.Context, c *Credentials) (*Workspace, error) {
+	if s.Workspace != "" {
+		return s.ResolveWorkspace(ctx, c, s.Workspace)
+	}
 	if c.WorkspaceID == "" {
-		return "", errors.New("no workspace selected: run `invopop auth workspace`")
+		return nil, errors.New("no workspace selected: run `invopop auth workspace`")
 	}
-	if c.WorkspaceToken != "" && time.Until(c.WorkspaceTokenExpiresAt) > refreshMargin {
-		return c.WorkspaceToken, nil
+	ws := &Workspace{ID: c.WorkspaceID, Name: c.WorkspaceName}
+	if k := c.Workspaces[c.WorkspaceID]; k != nil {
+		ws.Slug, ws.Sandbox = k.Slug, k.Sandbox
 	}
-	if err := s.mint(ctx, c); err != nil {
+	return ws, nil
+}
+
+// ResolveWorkspace finds the workspace ref names, as FindWorkspace does.
+// Workspaces already known are matched without asking the API; anything
+// else lists the user's workspaces afresh.
+func (s *Session) ResolveWorkspace(ctx context.Context, c *Credentials, ref string) (*Workspace, error) {
+	if ws, err := FindWorkspace(c.knownList(), ref); err == nil {
+		return ws, nil
+	}
+	orgs, err := s.Orgs(ctx, c)
+	if err != nil {
+		return nil, err
+	}
+	var all []*Workspace
+	for _, o := range orgs {
+		all = append(all, o.Workspaces...)
+	}
+	return FindWorkspace(all, ref)
+}
+
+// TokenExpiry reports when the stored token for workspace id expires, zero
+// if there is none.
+func (c *Credentials) TokenExpiry(id string) time.Time {
+	if k := c.Workspaces[id]; k != nil && k.Token != "" {
+		return k.TokenExpiresAt
+	}
+	return time.Time{}
+}
+
+// tokenFor returns a usable token for workspace id, reusing the stored one
+// while it has time left.
+func (s *Session) tokenFor(ctx context.Context, c *Credentials, id string) (string, error) {
+	if k := c.Workspaces[id]; k != nil && k.Token != "" && time.Until(k.TokenExpiresAt) > refreshMargin {
+		return k.Token, nil
+	}
+	tok, exp, err := s.mint(ctx, c, id)
+	if err != nil {
 		return "", err
 	}
-	if err := s.Save(c); err != nil {
+	k := c.known(id)
+	k.Token, k.TokenExpiresAt = tok, exp
+	// Store just this token, so commands running at the same time in other
+	// workspaces keep theirs.
+	err = s.Store.modify(s.Endpoints.APIHost, func(stored *Credentials) bool {
+		if stored.UserID != c.UserID {
+			return false // signed in again as someone else meanwhile
+		}
+		sk := stored.known(id)
+		sk.Token, sk.TokenExpiresAt = tok, exp
+		if sk.Slug == "" {
+			sk.Name, sk.Slug, sk.Sandbox = k.Name, k.Slug, k.Sandbox
+		}
+		return true
+	})
+	if err != nil {
 		return "", err
 	}
-	return c.WorkspaceToken, nil
+	return tok, nil
 }
 
 // UserToken returns the user's account-wide OAuth token, refreshed if
@@ -105,15 +175,15 @@ func (s *Session) UserToken(ctx context.Context, c *Credentials) (string, error)
 	return c.AccessToken, nil
 }
 
-// SelectWorkspace makes id the workspace later commands act in.
+// SelectWorkspace makes ws the default workspace later commands act in.
 func (s *Session) SelectWorkspace(ctx context.Context, c *Credentials, ws *Workspace) error {
 	c.WorkspaceID = ws.ID
 	c.WorkspaceName = ws.Name
-	c.WorkspaceToken = ""
-	c.WorkspaceTokenExpiresAt = time.Time{}
-	// Mint straight away, so a workspace the user cannot use is reported
-	// now rather than on the next command.
-	if err := s.mint(ctx, c); err != nil {
+	k := c.known(ws.ID)
+	k.Name, k.Slug, k.Sandbox = ws.Name, ws.Slug, ws.Sandbox
+	// Get a token straight away, so a workspace the user cannot use is
+	// reported now rather than on the next command.
+	if _, err := s.tokenFor(ctx, c, ws.ID); err != nil {
 		return err
 	}
 	return s.Save(c)
@@ -156,7 +226,37 @@ func (s *Session) Orgs(ctx context.Context, c *Credentials) ([]*Org, error) {
 		}
 		return nil, fmt.Errorf("listing workspaces: %w", err)
 	}
+	if err := s.rememberWorkspaces(c, orgs); err != nil {
+		return nil, err
+	}
 	return orgs, nil
+}
+
+// rememberWorkspaces records the workspaces listed so they can be found by
+// slug later, forgetting any the user no longer belongs to. Stored tokens
+// for those still listed are kept.
+func (s *Session) rememberWorkspaces(c *Credentials, orgs []*Org) error {
+	apply := func(c *Credentials) {
+		old := c.Workspaces
+		c.Workspaces = make(map[string]*KnownWorkspace)
+		for _, o := range orgs {
+			for _, w := range o.Workspaces {
+				k := &KnownWorkspace{Name: w.Name, Slug: w.Slug, Sandbox: w.Sandbox}
+				if prev := old[w.ID]; prev != nil {
+					k.Token, k.TokenExpiresAt = prev.Token, prev.TokenExpiresAt
+				}
+				c.Workspaces[w.ID] = k
+			}
+		}
+	}
+	apply(c)
+	return s.Store.modify(s.Endpoints.APIHost, func(stored *Credentials) bool {
+		if stored.UserID != c.UserID {
+			return false
+		}
+		apply(stored)
+		return true
+	})
 }
 
 type mintRequest struct {
@@ -170,33 +270,31 @@ type mintResponse struct {
 	ExpiresAt   int64  `json:"expires_at"`
 }
 
-// mint exchanges the user token for a token restricted to c.WorkspaceID.
-func (s *Session) mint(ctx context.Context, c *Credentials) error {
+// mint exchanges the user token for a token restricted to workspace id.
+func (s *Session) mint(ctx context.Context, c *Credentials, id string) (string, time.Time, error) {
 	ut, err := s.UserToken(ctx, c)
 	if err != nil {
-		return err
+		return "", time.Time{}, err
 	}
 	body, err := json.Marshal(&mintRequest{ClientID: s.endpoints(c).ClientID})
 	if err != nil {
-		return err
+		return "", time.Time{}, err
 	}
-	p := "/access/v1/workspace/" + url.PathEscape(c.WorkspaceID) + "/token"
+	p := "/access/v1/workspace/" + url.PathEscape(id) + "/token"
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.apiURL(p), bytes.NewReader(body))
 	if err != nil {
-		return err
+		return "", time.Time{}, err
 	}
 	req.Header.Set("Authorization", "Bearer "+ut)
 	req.Header.Set("Content-Type", "application/json")
 	out := new(mintResponse)
 	if err := s.Endpoints.do(req, out); err != nil {
-		return fmt.Errorf("getting a token for workspace %s: %w", c.WorkspaceID, err)
+		return "", time.Time{}, fmt.Errorf("getting a token for workspace %s: %w", id, err)
 	}
 	if out.AccessToken == "" {
-		return errors.New("getting a workspace token: none returned")
+		return "", time.Time{}, errors.New("getting a workspace token: none returned")
 	}
-	c.WorkspaceToken = out.AccessToken
-	c.WorkspaceTokenExpiresAt = time.Unix(out.ExpiresAt, 0)
-	return nil
+	return out.AccessToken, time.Unix(out.ExpiresAt, 0), nil
 }
 
 func (s *Session) apiURL(p string) string {
