@@ -117,6 +117,17 @@ Create a silo entry from a local document:
 invopop silo entries create --file invoice.yaml
 ```
 
+Search entries by their document's fields, following every page:
+
+```bash
+invopop silo entries query bill/invoice \
+    --filter 'state = "sent" AND issue_date > "2026-01-01"' \
+    --order-by 'issue_date desc' \
+    --all
+```
+
+Query results come from a read model that is eventually consistent, so an entry created a moment ago may not appear until the response's `watermark` passes its creation time.
+
 Run a transform job against an existing entry and wait for completion:
 
 ```bash
