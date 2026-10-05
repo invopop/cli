@@ -17,6 +17,8 @@ func siloEntriesCmd(getClient func() (*invopop.Client, error)) *cobra.Command {
 	entries.AddCommand(siloEntriesFetchCmd(getClient))
 	entries.AddCommand(siloEntriesFetchKeyCmd(getClient))
 	entries.AddCommand(siloEntriesUpdateCmd(getClient))
+	entries.AddCommand(siloEntriesQueryCmd(getClient))
+	entries.AddCommand(siloEntriesCountCmd(getClient))
 
 	return entries
 }

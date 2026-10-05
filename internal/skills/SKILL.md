@@ -88,6 +88,8 @@ invopop silo entries create [--file/-f path] [--folder X] [--key X]
 invopop silo entries fetch <id>
 invopop silo entries fetch-key <key>
 invopop silo entries update <id> [--file/-f path]
+invopop silo entries query <schema> [--filter X] [--order-by X] [--fields a,b] [--limit N] [--cursor X] [--count] [--all]
+invopop silo entries count <schema> [--filter X]
 invopop silo files create <entry-id> --file/-f path [--name X] [--category X]
 invopop silo files download <entry-id> <file-id>
 invopop silo build [--file/-f path] [--envelop]
@@ -118,6 +120,7 @@ All commands accept `--file/-f` for file input or stdin. YAML is auto-converted 
 - Validate documents with `invopop silo build` before submitting to workflows
 - Use `--envelop` with `silo build` to wrap raw GOBL documents into envelopes
 - Use `--key` on entries and jobs for idempotency
+- Use `silo entries query` to search by document fields, e.g. `invopop silo entries query bill/invoice --filter 'state = "sent" AND issue_date > "2026-01-01"'`. Combine terms with AND; OR only between values of one field. Results are eventually consistent, so a just-created entry may be missing until the `watermark` passes its creation time; fetch it by ID or key instead. Read any `notes` in the response, which flag issues such as a filter no index covers
 - Use `--wait` on job creation to block until completion
 - Check `faults` in job responses for errors
 - Always check `invopop access workspace` first to confirm which workspace you're operating on

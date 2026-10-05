@@ -37,10 +37,13 @@ func siloFilesCreateCmd(getClient func() (*invopop.Client, error)) *cobra.Comman
 			if file == "" {
 				return fmt.Errorf("--file/-f is required for file upload")
 			}
-			data, err := os.ReadFile(file)
+			// Opened rather than read, so the client can measure and stream
+			// it without holding the whole file in memory.
+			data, err := os.Open(file) //nolint:gosec // the user names the file to upload
 			if err != nil {
-				return fmt.Errorf("reading file %s: %w", file, err)
+				return fmt.Errorf("opening file %s: %w", file, err)
 			}
+			defer data.Close() //nolint:errcheck
 			if name == "" {
 				name = file
 			}
