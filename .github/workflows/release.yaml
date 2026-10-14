@@ -4,21 +4,8 @@
 #
 # Secrets required:
 #  * `GITHUB_TOKEN` - provided automatically by GitHub Actions.
-#
-# macOS signing and the Homebrew tap are fed from Infisical, read through an
-# OIDC machine identity. Set these repository variables to enable them:
-#  * `INFISICAL_IDENTITY_ID` - the machine identity trusted for this repo.
-#  * `INFISICAL_PROJECT_SLUG` - the project holding the secrets below, under
-#    the `prod` env at `/cli-release`.
-#
-# Secrets read from Infisical (each one optional; its step is skipped when
-# missing):
-#  * `MACOS_SIGN_P12` - Developer ID Application certificate, base64 .p12.
-#  * `MACOS_SIGN_PASSWORD` - password for the .p12.
-#  * `MACOS_NOTARY_KEY` - App Store Connect API key, base64 .p8.
-#  * `MACOS_NOTARY_KEY_ID` - the API key's ID.
-#  * `MACOS_NOTARY_ISSUER_ID` - the API key's issuer ID.
 #  * `HOMEBREW_TAP_TOKEN` - token with contents write on invopop/homebrew-tap.
+#    Optional; the formula is not published without it.
 #
 
 name: Release
@@ -33,7 +20,6 @@ on:
 
 permissions:
   contents: write
-  id-token: write # Infisical OIDC login
 
 jobs:
   tag-build-publish:
@@ -64,22 +50,12 @@ jobs:
         with:
           go-version-file: "go.mod"
 
-      - name: Fetch release secrets
-        if: vars.INFISICAL_IDENTITY_ID != ''
-        uses: Infisical/secrets-action@v1.0.12
-        with:
-          method: oidc
-          identity-id: ${{ vars.INFISICAL_IDENTITY_ID }}
-          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
-          env-slug: prod
-          secret-path: /cli-release
-          export-type: env
-
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
-          version: latest
+          version: "~> v2" # v3 may drop `brews`, used for the Homebrew formula
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}

@@ -28,30 +28,15 @@ archives:
         formats:
           - zip
 
-# Sign and notarize the macOS binaries so Gatekeeper trusts them. Runs on
-# the Linux runner (quill); skipped when the signing secrets are absent, as
-# in snapshots and forks.
-notarize:
-  macos:
-    - enabled: '{{ isEnvSet "MACOS_SIGN_P12" }}'
-      ids:
-        - invopop
-      sign:
-        certificate: "{{ .Env.MACOS_SIGN_P12 }}"
-        password: "{{ .Env.MACOS_SIGN_PASSWORD }}"
-      notarize:
-        issuer_id: "{{ .Env.MACOS_NOTARY_ISSUER_ID }}"
-        key_id: "{{ .Env.MACOS_NOTARY_KEY_ID }}"
-        key: "{{ .Env.MACOS_NOTARY_KEY }}"
-        wait: true
-        timeout: 20m
-
-homebrew_casks:
+# Publish a formula rather than a cask: Homebrew quarantines casks, so an
+# unsigned binary installed as one is blocked by Gatekeeper, but formulas
+# are not quarantined. `brews` is deprecated in favour of casks, so the
+# release workflow pins GoReleaser to v2.
+brews:
   - name: invopop
     ids:
       - invopop
-    binaries:
-      - invopop
+    directory: Formula
     homepage: https://invopop.com
     description: Command-line interface for the Invopop platform
     repository:
@@ -59,14 +44,11 @@ homebrew_casks:
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     skip_upload: '{{ if isEnvSet "HOMEBREW_TAP_TOKEN" }}false{{ else }}true{{ end }}'
-    generate_completions_from_executable:
-      executable: invopop
-      args:
-        - completion
-      shells:
-        - bash
-        - zsh
-        - fish
+    install: |
+      bin.install "invopop"
+      generate_completions_from_executable(bin/"invopop", "completion")
+    test: |
+      system "#{bin}/invopop", "--help"
 
 checksum:
   name_template: "checksums.txt"
