@@ -4,6 +4,12 @@ Command-line interface for the [Invopop](https://invopop.com) platform. Build an
 
 ## Installation
 
+### Homebrew (macOS and Linux)
+
+```bash
+brew install invopop/tap/invopop
+```
+
 ### Pre-built binaries
 
 Download the latest release for your platform from the [releases page](https://github.com/invopop/cli/releases).
