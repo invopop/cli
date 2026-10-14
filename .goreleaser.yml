@@ -28,28 +28,6 @@ archives:
         formats:
           - zip
 
-# Publish a formula rather than a cask: Homebrew quarantines casks, so an
-# unsigned binary installed as one is blocked by Gatekeeper, but formulas
-# are not quarantined. `brews` is deprecated in favour of casks, so the
-# release workflow pins GoReleaser to v2.
-brews:
-  - name: invopop
-    ids:
-      - invopop
-    directory: Formula
-    homepage: https://invopop.com
-    description: Command-line interface for the Invopop platform
-    repository:
-      owner: invopop
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-    skip_upload: '{{ if isEnvSet "HOMEBREW_TAP_TOKEN" }}false{{ else }}true{{ end }}'
-    install: |
-      bin.install "invopop"
-      generate_completions_from_executable(bin/"invopop", "completion")
-    test: |
-      system "#{bin}/invopop", "--help"
-
 checksum:
   name_template: "checksums.txt"
 

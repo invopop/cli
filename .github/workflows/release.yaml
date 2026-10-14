@@ -5,11 +5,12 @@
 # Secrets required:
 #  * `GITHUB_TOKEN` - provided automatically by GitHub Actions.
 #  * `HOMEBREW_TAP_APP_KEY` - private key of the GitHub App installed on
-#    invopop/homebrew-tap with contents write.
+#    invopop/homebrew-tap with contents write, allowed to bypass the
+#    pull request rule on its main branch.
 #
 # Variables required:
 #  * `HOMEBREW_TAP_APP_ID` - that GitHub App's ID. Optional; the Homebrew
-#    formula is not published without it.
+#    formula is not bumped without it.
 #
 
 name: Release
@@ -68,8 +69,28 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
-          version: "~> v2" # v3 may drop `brews`, used for the Homebrew formula
+          version: latest
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HOMEBREW_TAP_TOKEN: ${{ steps.tap-token.outputs.token }}
+
+      # The formula builds from the tagged source, so a release only needs
+      # its url and sha256 bumped.
+      - name: Bump Homebrew formula
+        if: steps.tap-token.outputs.token != ''
+        env:
+          TAP_TOKEN: ${{ steps.tap-token.outputs.token }}
+          TAG: ${{ steps.bump.outputs.new_tag || github.ref_name }}
+        run: |
+          url="https://github.com/invopop/cli/archive/refs/tags/${TAG}.tar.gz"
+          sha=$(curl -fsSL "$url" | sha256sum | cut -d' ' -f1)
+          tap="$RUNNER_TEMP/homebrew-tap"
+          git clone -q "https://x-access-token:${TAP_TOKEN}@github.com/invopop/homebrew-tap.git" "$tap"
+          cd "$tap"
+          sed -i -e "s|^  url \".*\"|  url \"${url}\"|" \
+            -e "s|^  sha256 \".*\"|  sha256 \"${sha}\"|" Formula/invopop.rb
+          git diff --quiet && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -qam "invopop ${TAG}"
+          git push -q
