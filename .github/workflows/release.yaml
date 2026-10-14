@@ -4,8 +4,12 @@
 #
 # Secrets required:
 #  * `GITHUB_TOKEN` - provided automatically by GitHub Actions.
-#  * `HOMEBREW_TAP_TOKEN` - token with contents write on invopop/homebrew-tap.
-#    Optional; the formula is not published without it.
+#  * `HOMEBREW_TAP_APP_KEY` - private key of the GitHub App installed on
+#    invopop/homebrew-tap with contents write.
+#
+# Variables required:
+#  * `HOMEBREW_TAP_APP_ID` - that GitHub App's ID. Optional; the Homebrew
+#    formula is not published without it.
 #
 
 name: Release
@@ -50,6 +54,16 @@ jobs:
         with:
           go-version-file: "go.mod"
 
+      - name: Create Homebrew tap token
+        id: tap-token
+        if: vars.HOMEBREW_TAP_APP_ID != ''
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.HOMEBREW_TAP_APP_ID }}
+          private-key: ${{ secrets.HOMEBREW_TAP_APP_KEY }}
+          owner: invopop
+          repositories: homebrew-tap
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
@@ -58,4 +72,4 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          HOMEBREW_TAP_TOKEN: ${{ steps.tap-token.outputs.token }}
