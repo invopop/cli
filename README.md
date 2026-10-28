@@ -4,6 +4,16 @@ Command-line interface for the [Invopop](https://invopop.com) platform. Build an
 
 ## Installation
 
+### Install script (macOS and Linux)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/invopop/cli/main/install.sh | sh
+```
+
+This installs the latest release to `~/.local/bin`, after checking it against
+the release checksums. Set `INVOPOP_INSTALL_DIR` to install elsewhere, or
+`INVOPOP_VERSION` (e.g. `v0.3.0`) to pin a release.
+
 ### Pre-built binaries
 
 Download the latest release for your platform from the [releases page](https://github.com/invopop/cli/releases).
